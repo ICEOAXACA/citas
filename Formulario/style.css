@@ -16,7 +16,7 @@ header{
     padding: 1px;
 }
 
-.contenedor{
+.submenu{
     display: flex;
     justify-content: center;
     align-items: center;

@@ -41,7 +41,7 @@ submitBtn.addEventListener("click", function(){
   progressText[current - 1].classList.add("active");
   current += 1;
   setTimeout(function(){
-    alert("Cita agendada");
+    alert("Cita Registrada");
     location.reload();
   },800);
 });

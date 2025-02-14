@@ -32,7 +32,7 @@
 
   </header>
 
-  <div class="contenedor">
+  <div class="submenu">
     <h3 class="subtitulo">Registro de Citas</h3>
   </div>
 
