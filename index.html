@@ -57,23 +57,27 @@
         <form action="#">
           <div class="page slide-page">
             <div class="field">
-              <div class="label">Nombre Completo</div>
-              <input type="text">
+              <div class="label">Departamento</div>
+              <select>
+                <option>Jurídico</option>
+                <option>Cartografía</option>
+                <option>Tramitación</option>
+                
+              </select>
             </div>
-            <div class="field">
-              <div class="label">Apellidos</div>
-              <input type="text">
-            </div>
+            <!--puedes agregar un div para la ventana de primer paso-->
+
+            
             <div class="field">
               <button class="firstNext next">Siguiente</button>
             </div>
           </div>
 
           <div class="page">
-            <div class="title">Información de Contacto</div>
+            <div class="title">Fecha</div>
             <div class="field">
-              <div class="label">Correo Electronico</div>
-              <input type="text">
+              <div class="label">Seleccionar Fecha</div>
+              <input type="datetime-local">
             </div>
             <div class="field">
               <div class="label">Número de Telefono</div>
@@ -86,10 +90,7 @@
           </div>
 
           <div class="page">
-            <div class="field">
-              <div class="label">Fecha de Nacimiento</div>
-              <input type="datetime-local">
-            </div>
+            
             <div class="field">
               <div class="label">Genero</div>
               <select>
