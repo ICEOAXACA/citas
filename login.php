@@ -93,25 +93,27 @@
   <main class="form-signin w-100 m-auto">
 
     <div class="CentrarLogoLogin">
-      <img class="mb-4" src="../Imagenes/LogoLogin.png" alt="" width="150" height="50">
+      <img class="mb-4" src="Imagenes/LogoLogin.png" alt="" width="150" height="50">
     </div>
 
-    <form>
+    <form action="php/log.php" method="post">
 
 
       <h1 class="h3 fw-normal">Inicio de sesion</h1>
 
       <div class="form-floating">
-        <input type="text" class="form-control" id="floatingInput" placeholder="Nombre de Usuario">
+        <input type="text" class="form-control" id="floatingInput" placeholder="Nombre de Usuario" name="usuario">
         <label for="floatingInput">Usuario</label>
       </div>
       <div class="form-floating">
-        <input type="password" class="form-control" id="floatingPassword" placeholder="Contraseña">
-        <label for="floatingPassword">Contraseña</label>
+        <input type="password" class="form-control" id="floatingPassword" placeholder="Contraseña" name="pass">
+        <label for="inputPassword">Contraseña</label>
       </div>
 
-      <button class="btn btn-primary w-100 py-2" type="submit">Ingresar</button>
+      <button class="btn btn-outline-secondary w-100 py-2" type="submit">Ingresar</button>
     </form>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
   </main>
 
 </body>
