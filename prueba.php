@@ -1,4 +1,4 @@
-<?php
+
 include('php/c.php');
 
 session_start();

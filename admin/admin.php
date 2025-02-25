@@ -1,9 +1,11 @@
 <?php //este php evita que alguien ingrese sin login
-include('php/c.php');
-$usuario =$_SESSION['usuario'];
-if(!isset($usuario)){
-    header("location:../usuario.php");
-}?>
+session_start();
+if(!isset($_SESSION['roles']) || $_SESSION ['roles'] != '1'){
+    header("location:../php/log.php");
+    session_destroy();
+    exit();
+}
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -14,7 +16,7 @@ if(!isset($usuario)){
     <title>Usuario</title>
 </head>
 <body>
-    <a href="php/cerrar.php" class="btn btn-primary"> Cerrar Sesion </a>
+    <a href="../php/cerrar.php" class="btn btn-primary"> Cerrar Sesion </a>
 
     <h1 class ="text-center"> Bienvenido</h1>
 

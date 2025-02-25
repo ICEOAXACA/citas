@@ -1,9 +1,11 @@
 <?php //este php evita que alguien ingrese sin login
-include('php/c.php');
-$usuario =$_SESSION['usuario'];
-if(!isset($usuario)){
-    header("location:../usuario.php");
-}?>
+session_start();
+if(!isset($_SESSION['roles']) || $_SESSION ['roles'] != '2'){
+    header("location:../php/log.php");
+    session_destroy();
+    exit();
+}
+?>
 
 <!DOCTYPE html>
 <html lang="en">
