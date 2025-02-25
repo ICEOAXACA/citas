@@ -1,5 +1,5 @@
 <?php
-include('c.php');
+include 'c.php';
 
 /*se valida que ingresen valores reales para evitar un sql injection
 $usuario =$conexion->real_escape_string(  $_POST['usuario']);
@@ -8,14 +8,27 @@ $pass =$conexion->real_escape_string(  $_POST['pass']);*/
 $usuario = $_POST['usuario'];
 $pass = $_POST['pass'];
 
-//se ace la consulta de usuario y contraseña
+
+//se hace la consulta de usuario y contraseña
 $consulta = "SELECT * FROM  usuarios where usuario='$usuario' and contraseña='$pass'";
+$datos = pg_query($conexion, $consulta) or die("Error de Consulta");
 
-$fila = pg_query($conexion, $consulta);
+if((pg_num_rows($datos)> 0)){
+    
 
-echo $usuario;
+$user = pg_fetch_result($datos,0,"usuario");
+$contra = pg_fetch_result($datos,0,"contraseña");
+
+
 //se valida que la variable tenga datos
-if ($fila > 0) {
+if ($usuario == $user and $contra == $pass) {
+
+    session_start();
+
+        echo $user;
+        echo $contra;
+
+}else{
     echo '
    
     <script>
@@ -24,15 +37,17 @@ if ($fila > 0) {
     </script>
 
     ';
+}
+
+
+        
 
 } else { //si no tiene datos de login redireccionamos a que ingresen datos
 
-    session_start();
 
-    if ($_SESSION['usuario'] = $usuario and $_SESSION['contraseña'] = $pass) {
-        header("location:../usuario.php");
-    } else {
-        echo '
+
+
+    echo '
    
     <script>
         alert("Intentalo Nuevamente");
@@ -40,8 +55,6 @@ if ($fila > 0) {
     </script>
 
     ';
-    }
-
 
 
 }
