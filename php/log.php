@@ -20,7 +20,7 @@ if ((pg_num_rows($datos) > 0)) {
 
     $user = pg_fetch_result($datos, 0, "usuario");
     $contra = pg_fetch_result($datos, 0, "contraseña");
-    $rol = pg_fetch_result($datos, 0, "id_rol");
+    $rol = pg_fetch_result($datos, 0, "rol_id");
 
 
 

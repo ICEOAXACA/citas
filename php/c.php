@@ -2,10 +2,10 @@
 header("Content-Type: text/html; charset=UTF-8");
 
 $user = "postgres";
-$password = " ";
+$password = "siteoss";
 $port = "5432";
-$host = "localhost";
-$bd = "iceocitas";
+$host = "10.173.155.46";
+$bd = "citasnuevo";
 
 $conect = "host=$host port=$port dbname=$bd user=$user password=$password";
 $conexion=pg_pconnect($conect) or die ("Error de conexion: ".pg_last_error());
