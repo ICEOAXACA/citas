@@ -77,12 +77,11 @@ if (isset($_GET['servicio_id']) && !empty($_GET['servicio_id'])) {
       <div class="container mt-4">
         <form method="get" action="#">
 
-
           <!-- Servicios secundarios -->
           <?php if (isset($_GET['servicio_id']) && !empty($servicios_secundarios)): ?>
           <div class="mb-3">
             <label for="servicio_secundario" class="form-label">Selecciona un servicio</label>
-            <select class="form-select" id="servicio_secundario" name="servicio_secundario_id">
+            <select class="form-select" id="servicio_secundario" name="servicio_secundario_id" required aria-label="Seleccione un servicio">
               <option value="" selected disabled>Seleccione una opción</option>
               <?php
                 // Mostrar los servicios secundarios disponibles
@@ -92,6 +91,12 @@ if (isset($_GET['servicio_id']) && !empty($_GET['servicio_id'])) {
               ?>
             </select>
           </div>
+          
+          <!-- Mensaje de error si no se ha seleccionado ninguna opción -->
+          <div class="invalid-feedback" style="display: none;">
+            Por favor, selecciona un recurso antes de continuar.
+          </div>
+          
           <?php elseif (isset($_GET['servicio_id']) && empty($servicios_secundarios)): ?>
             <p class="alert alert-warning">No hay servicios secundarios disponibles para el servicio seleccionado.</p>
           <?php endif; ?>
