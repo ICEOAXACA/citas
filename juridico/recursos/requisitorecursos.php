@@ -1,3 +1,34 @@
+<?php
+session_start();
+require_once '../../php/c.php';
+
+// Verificamos que la sesión 'secundario' esté definida
+$requisitos_filtrados = [];
+
+if (isset($_SESSION['secundario'])) {
+    $servicio_secundario_id = $_SESSION['secundario'];
+
+    // Consulta para obtener los requisitos relacionados y activos
+    $sql = "
+        SELECT r.nombre
+        FROM requisitos r
+        JOIN requisitos_servicios_secundarios rss
+          ON r.id = rss.requisito_id
+        WHERE rss.servicio_secundario_id = $1
+          AND r.estatus = 't'
+          AND rss.estatus = 't'
+    ";
+
+    $resultado = pg_query_params($conexion, $sql, array($servicio_secundario_id));
+
+    if ($resultado && pg_num_rows($resultado) > 0) {
+        while ($fila = pg_fetch_assoc($resultado)) {
+            $requisitos_filtrados[] = $fila['nombre'];
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="es" dir="ltr">
 <head>
@@ -28,25 +59,13 @@
     <!-- Lista dinámica desde PostgreSQL -->
     <div class="container mt-4">
       <ol class="list-group text-start">
-        <?php
-          // Incluir la conexión PostgreSQL
-          require_once '../../php/c.php';
-
-          $sql = "SELECT nombre FROM requisitos";
-          $resultado = pg_query($conexion, $sql);
-
-          if ($resultado && pg_num_rows($resultado) > 0) {
-            $contador = 1;
-            while ($fila = pg_fetch_assoc($resultado)) {
-              echo "<li class='list-group-item'>{$contador}. " . htmlspecialchars($fila['nombre']) . "</li>";
-              $contador++;
-            }
-          } else {
-            echo "<li class='list-group-item'>No hay requisitos disponibles.</li>";
-          }
-
-          pg_close($conexion);
-        ?>
+        <?php if (!empty($requisitos_filtrados)): ?>
+          <?php foreach ($requisitos_filtrados as $index => $nombre): ?>
+            <li class="list-group-item"><?= ($index + 1) . ". " . htmlspecialchars($nombre) ?></li>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <li class="list-group-item">No hay requisitos disponibles para el servicio seleccionado.</li>
+        <?php endif; ?>
       </ol>
     </div>
 
@@ -54,19 +73,6 @@
     <div class="mb-3 text-center mt-4">
       <a href="siguiente_paso.php" class="btn btn-primary">Siguiente</a>
     </div>
-  </div>
-
-  <?php
-    // Mostrar sesiones al final
-    session_start();
-  ?>
-  <div class="container mt-5 mb-5">
-    <h5 class="text-center">Sesiones activas</h5>
-    <ul class="list-group">
-      <li class="list-group-item"><strong>Departamento (principal):</strong> <?= isset($_SESSION['principal']) ? htmlspecialchars($_SESSION['principal']) : 'No definido' ?></li>
-      <li class="list-group-item"><strong>Servicio principal (secundario):</strong> <?= isset($_SESSION['secundario']) ? htmlspecialchars($_SESSION['secundario']) : 'No definido' ?></li>
-      <li class="list-group-item"><strong>Recurso:</strong> <?= isset($_SESSION['servicio']) ? htmlspecialchars($_SESSION['servicio']) : 'No definido' ?></li>
-    </ul>
   </div>
 
   <!-- Bootstrap JS -->
