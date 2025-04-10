@@ -1,45 +1,48 @@
 <?php
-// Incluye la conexión a la base de datos
-require_once '../../php/c.php';  // Asegúrate de que la conexión esté incluida correctamente
+session_start(); // Iniciar la sesión
+
+require_once '../../php/c.php';
 
 // Obtener el ID de departamento desde la URL (si existe)
 $departamento_id = isset($_GET['departamento']) ? $_GET['departamento'] : null;
 
-// Verificar si se pasó el ID del departamento por GET
+// Consultar servicios principales
 if ($departamento_id) {
-    // Consultar los servicios_principales filtrando por departamento_id y estatus = 't'
     $sql = "SELECT id, nombre FROM servicios_principales WHERE departamento_id = $1 AND estatus = 't'";
-    $result = pg_query_params($conexion, $sql, array($departamento_id));  // Ejecutar la consulta con parámetros para evitar inyección SQL
+    $result = pg_query_params($conexion, $sql, array($departamento_id));
 
-    // Verificar si se obtuvieron resultados
     if ($result) {
-        // Guardar los servicios en un array
         $servicios = [];
         while ($row = pg_fetch_assoc($result)) {
-            $servicios[] = ['id' => $row['id'], 'nombre' => $row['nombre']];  // Guardamos tanto el ID como el nombre
+            $servicios[] = ['id' => $row['id'], 'nombre' => $row['nombre']];
         }
     } else {
-        $servicios = [];  // En caso de que no haya servicios para el departamento proporcionado o estatus != 't'
+        $servicios = [];
     }
 } else {
-    $servicios = [];  // Si no se proporcionó un departamento, no mostrar nada
+    $servicios = [];
 }
 
-// Verificar si se ha recibido el parámetro servicio_id y realizar consulta a servicios_secundarios
+// Consultar servicios secundarios si se pasa el servicio principal
 $servicios_secundarios = [];
 if (isset($_GET['servicio_id']) && !empty($_GET['servicio_id'])) {
-    $servicio_id = $_GET['servicio_id'];  // ID del servicio principal seleccionado
+    $servicio_id = $_GET['servicio_id'];
 
-    // Consultar los servicios secundarios relacionados con el servicio_id y estatus = 't'
     $sql_secundarios = "SELECT id, nombre FROM servicios_secundarios WHERE servicio_principal_id = $1 AND estatus = 't'";
     $result_secundarios = pg_query_params($conexion, $sql_secundarios, array($servicio_id));
 
-    // Verificar si se obtuvieron resultados
     if ($result_secundarios) {
         while ($row = pg_fetch_assoc($result_secundarios)) {
-            $servicios_secundarios[] = ['id' => $row['id'], 'nombre' => $row['nombre']];  // Guardar los servicios secundarios
+            $servicios_secundarios[] = ['id' => $row['id'], 'nombre' => $row['nombre']];
         }
     }
+}
+
+// Guardar servicio seleccionado en sesión y redirigir
+if (isset($_GET['servicio_secundario_id'])) {
+    $_SESSION['servicio'] = $_GET['servicio_secundario_id'];
+    header("Location: requisitoservicios.php");
+    exit();
 }
 ?>
 
@@ -51,15 +54,12 @@ if (isset($_GET['servicio_id']) && !empty($_GET['servicio_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Citas ICEO</title>
 
-    <!-- Enlace a Bootstrap desde el CDN -->
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Fuente para iconos -->
     <script src="https://kit.fontawesome.com/a076d05399.js"></script>
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <!-- Contenedor principal -->
     <div class="container-fluid">
       <!-- Barra superior -->
       <div class="d-flex justify-content-between align-items-center py-3">
@@ -68,40 +68,31 @@ if (isset($_GET['servicio_id']) && !empty($_GET['servicio_id'])) {
         </a>
       </div>
 
-      <!-- Título centrado -->
+      <!-- Título -->
       <header class="text-center mb-4">
         <h2>Registro de Citas ICEO</h2>
       </header>
 
-      <!-- Formulario -->
       <div class="container mt-4">
-        <form method="get" action="#">
-
+        <form method="get">
           <!-- Servicios secundarios -->
           <?php if (isset($_GET['servicio_id']) && !empty($servicios_secundarios)): ?>
           <div class="mb-3">
             <label for="servicio_secundario" class="form-label">Selecciona un servicio</label>
-            <select class="form-select" id="servicio_secundario" name="servicio_secundario_id" required aria-label="Seleccione un servicio">
+            <select class="form-select" id="servicio_secundario" name="servicio_secundario_id" required>
               <option value="" selected disabled>Seleccione una opción</option>
-              <?php
-                // Mostrar los servicios secundarios disponibles
-                foreach ($servicios_secundarios as $servicio_secundario) {
-                    echo "<option value=\"" . htmlspecialchars($servicio_secundario['id']) . "\">" . htmlspecialchars($servicio_secundario['nombre']) . "</option>";
-                }
-              ?>
+              <?php foreach ($servicios_secundarios as $servicio_secundario): ?>
+                <option value="<?= htmlspecialchars($servicio_secundario['id']) ?>">
+                  <?= htmlspecialchars($servicio_secundario['nombre']) ?>
+                </option>
+              <?php endforeach; ?>
             </select>
           </div>
-          
-          <!-- Mensaje de error si no se ha seleccionado ninguna opción -->
-          <div class="invalid-feedback" style="display: none;">
-            Por favor, selecciona un recurso antes de continuar.
-          </div>
-          
-          <?php elseif (isset($_GET['servicio_id']) && empty($servicios_secundarios)): ?>
+          <?php elseif (isset($_GET['servicio_id'])): ?>
             <p class="alert alert-warning">No hay servicios secundarios disponibles para el servicio seleccionado.</p>
           <?php endif; ?>
 
-          <!-- Botón Siguiente -->
+          <!-- Botón -->
           <div class="mb-3 text-center">
             <button type="submit" class="btn btn-primary">Siguiente</button>
           </div>
@@ -109,7 +100,7 @@ if (isset($_GET['servicio_id']) && !empty($_GET['servicio_id'])) {
       </div>
     </div>
 
-    <!-- Incluir JS de Bootstrap desde CDN -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

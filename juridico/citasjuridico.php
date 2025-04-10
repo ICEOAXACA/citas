@@ -1,4 +1,8 @@
 <?php
+// Iniciar la sesión
+session_start();
+
+// Incluye la conexión a la base de datos
 require_once '../php/c.php';  // Asegúrate de que la conexión esté incluida correctamente
 
 // Obtener el ID de departamento desde la URL (si existe y es un número válido)
@@ -29,6 +33,9 @@ if ($departamento_id) {
 // Verificar si el formulario fue enviado y si el servicio es válido
 if (isset($_GET['servicio'])) {
     $servicio_id = $_GET['servicio'];
+
+    // Guardar el ID del servicio en la sesión llamada 'secundario'
+    $_SESSION['secundario'] = $servicio_id;
 
     // Redirigir dependiendo del ID del servicio y pasar el ID por la URL
     if ($servicio_id == 1) {
@@ -78,7 +85,7 @@ if (isset($_GET['servicio'])) {
             <form action="" method="get">
                 <!-- Servicios principales -->
                 <div class="mb-3">
-                    <label for="servicio" class="form-label">Selecciona el área del servicio </label>
+                    <label for="servicio" class="form-label">Selecciona el área del servicio</label>
                     <select class="form-select" id="servicio" name="servicio" required aria-label="Seleccione un servicio">
                         <option value="" selected disabled>Seleccione una opción</option>
                         <?php
