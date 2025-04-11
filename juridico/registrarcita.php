@@ -115,7 +115,7 @@ if ($res_horas_ocupadas) {
   <div class="container mt-4">
     <h2 class="text-center">Registro de Citas ICEO</h2>
 
-    <form id="formularioCita" action="guardar_datos.php" method="POST" class="mt-4">
+    <form id="formularioCita" action="verificardatos.php" method="POST" class="mt-4">
       <div class="mb-3">
         <label for="nombre" class="form-label">Nombre completo *</label>
         <input type="text" class="form-control" name="nombre" required>
