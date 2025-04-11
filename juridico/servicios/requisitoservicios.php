@@ -6,10 +6,10 @@ require_once '../../php/c.php';
 $requisitos_filtrados = [];
 
 if (isset($_SESSION['secundario'])) {
-    $servicio_secundario_id = $_SESSION['secundario'];
+  $servicio_secundario_id = $_SESSION['secundario'];
 
-    // Consulta para obtener los requisitos relacionados y activos
-    $sql = "
+  // Consulta para obtener los requisitos relacionados y activos
+  $sql = "
         SELECT r.nombre
         FROM requisitos r
         JOIN requisitos_servicios_secundarios rss
@@ -19,18 +19,19 @@ if (isset($_SESSION['secundario'])) {
           AND rss.estatus = 't'
     ";
 
-    $resultado = pg_query_params($conexion, $sql, array($servicio_secundario_id));
+  $resultado = pg_query_params($conexion, $sql, array($servicio_secundario_id));
 
-    if ($resultado && pg_num_rows($resultado) > 0) {
-        while ($fila = pg_fetch_assoc($resultado)) {
-            $requisitos_filtrados[] = $fila['nombre'];
-        }
+  if ($resultado && pg_num_rows($resultado) > 0) {
+    while ($fila = pg_fetch_assoc($resultado)) {
+      $requisitos_filtrados[] = $fila['nombre'];
     }
+  }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="es" dir="ltr">
+
 <head>
   <link rel="icon" type="image/x-icon" href="../../Imagenes/favicon.ico">
   <meta charset="utf-8">
@@ -42,6 +43,7 @@ if (isset($_SESSION['secundario'])) {
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="../../style.css">
 </head>
+
 <body>
   <div class="container-fluid">
     <!-- Barra superior -->
@@ -52,12 +54,12 @@ if (isset($_SESSION['secundario'])) {
     </div>
 
     <!-- Título -->
-    <header class="text-center mb-4">
+    <header class="text-center mb-1">
       <h2>REQUERIMIENTOS PARA REGISTRAR LA CITA</h2>
     </header>
 
     <!-- Lista dinámica desde PostgreSQL -->
-    <div class="container mt-4">
+    <div class="container mt-1">
       <ol class="list-group text-start">
         <?php if (!empty($requisitos_filtrados)): ?>
           <?php foreach ($requisitos_filtrados as $index => $nombre): ?>
@@ -69,13 +71,39 @@ if (isset($_SESSION['secundario'])) {
       </ol>
     </div>
 
-    <!-- Botón de siguiente -->
+    <!-- Botón para descargar el PDF -->
+    <div class="text-center mt-4">
+      <a id="btnDescargarPDF" href="SERVICIOS-JURIDICOS.pdf" download class="btn btn-success">
+        Descargar formato de Servicios Jurídicos
+        <i class="fas fa-file-download ms-2"></i>
+      </a>
+    </div>
+
+    <!-- Botón de siguiente (deshabilitado al inicio) -->
     <div class="mb-3 text-center mt-4">
-      <a href="siguiente_paso.php" class="btn btn-primary">Siguiente</a>
+      <a id="btnSiguiente" href="siguiente_paso.php" class="btn btn-primary disabled" tabindex="-1" aria-disabled="true">
+        Siguiente
+      </a>
     </div>
   </div>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Script para controlar la habilitación del botón -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const btnDescargar = document.getElementById("btnDescargarPDF");
+      const btnSiguiente = document.getElementById("btnSiguiente");
+
+      btnDescargar.addEventListener("click", function () {
+        // Habilita el botón "Siguiente"
+        btnSiguiente.classList.remove("disabled");
+        btnSiguiente.removeAttribute("aria-disabled");
+        btnSiguiente.setAttribute("tabindex", "0");
+      });
+    });
+  </script>
 </body>
+
 </html>
