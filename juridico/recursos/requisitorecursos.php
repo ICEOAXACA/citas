@@ -71,7 +71,7 @@ if (isset($_SESSION['secundario'])) {
 
     <!-- Botón de siguiente -->
     <div class="mb-3 text-center mt-4">
-      <a href="siguiente_paso.php" class="btn btn-primary">Siguiente</a>
+      <a href="../registrarcita.php" class="btn btn-primary">Siguiente</a>
     </div>
   </div>
 

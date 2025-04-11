@@ -81,7 +81,7 @@ if (isset($_SESSION['secundario'])) {
 
     <!-- Botón de siguiente (deshabilitado al inicio) -->
     <div class="mb-3 text-center mt-4">
-      <a id="btnSiguiente" href="siguiente_paso.php" class="btn btn-primary disabled" tabindex="-1" aria-disabled="true">
+      <a id="btnSiguiente" href="../registrarcita.php" class="btn btn-primary disabled" tabindex="-1" aria-disabled="true">
         Siguiente
       </a>
     </div>
