@@ -1,6 +1,10 @@
 <?php
 session_start();
 require_once '../php/c.php';
+require_once '../vendor/autoload.php';
+
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 // Guardar idhora si viene desde POST
 if (isset($_POST['idhora'])) {
@@ -22,7 +26,6 @@ if (
     ];
 }
 
-// Recuperar datos desde sesión
 $datos_cita = $_SESSION['datos_cita'] ?? [];
 
 $nombre = $datos_cita['nombre'] ?? '';
@@ -37,9 +40,9 @@ $secundario = $_SESSION['secundario'] ?? null;
 $servicio = $_SESSION['servicio'] ?? null;
 $idhora = $_SESSION['idhora'] ?? null;
 
-// Obtener nombres desde BD
 $nombre_departamento = $nombre_servicio_principal = $nombre_servicio_secundario = 'No encontrado';
 
+// Obtener nombres desde la base de datos
 if ($principal) {
     $res = pg_query_params($conexion, "SELECT nombre FROM departamentos WHERE id = $1", [$principal]);
     if ($res && pg_num_rows($res) > 0) $nombre_departamento = pg_fetch_result($res, 0, 'nombre');
@@ -53,12 +56,28 @@ if ($servicio) {
     if ($res && pg_num_rows($res) > 0) $nombre_servicio_secundario = pg_fetch_result($res, 0, 'nombre');
 }
 
-// Insertar si se presionó el botón
+// Obtener requisitos
+$requisitos_filtrados = [];
+if (is_numeric($secundario)) {
+    $sql = "
+        SELECT r.nombre
+        FROM requisitos r
+        JOIN requisitos_servicios_secundarios rss ON r.id = rss.requisito_id
+        WHERE rss.servicio_secundario_id = $1 AND r.estatus = 't' AND rss.estatus = 't'
+    ";
+    $resultado = pg_query_params($conexion, $sql, [$secundario]);
+    if ($resultado && pg_num_rows($resultado) > 0) {
+        while ($fila = pg_fetch_assoc($resultado)) {
+            $requisitos_filtrados[] = $fila['nombre'];
+        }
+    }
+}
+
+// Procesar el registro de cita
 if (isset($_POST['registrar_cita'])) {
     if (!$idhora || !$nombre || (!$telefono && !$correo) || !$fecha_cita) {
         $mensaje_error = "❌ Debes proporcionar al menos un número de teléfono o un correo electrónico.";
     } else {
-        // Validación para evitar fechas inválidas o pasadas
         $fecha_obj = DateTime::createFromFormat('Y-m-d', $fecha_cita);
         $hoy = new DateTime();
         $hoy->setTime(0, 0, 0);
@@ -90,12 +109,33 @@ if (isset($_POST['registrar_cita'])) {
             $resultado_insert = pg_query_params($conexion, $query, $params);
 
             if ($resultado_insert && pg_affected_rows($resultado_insert) > 0) {
+                // Generar PDF
+                $logo_path = $_SERVER['DOCUMENT_ROOT'] . '/citasiceo/imagenes/logoiceo2017.png';
+                $logo_src = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
+
+                $departamento = $nombre_departamento; // ✅ Esto evita el error de variable indefinida
+
+                ob_start();
+                include 'acuse_template.php';
+                $html = ob_get_clean();
+
+                $options = new Options();
+                $options->set('isHtml5ParserEnabled', true);
+                $options->set('isPhpEnabled', true);
+                $dompdf = new Dompdf($options);
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'portrait');
+                $dompdf->render();
+                $dompdf->stream("acuse_cita_$folio.pdf", ["Attachment" => true]);
+
+                // Limpiar sesiones
                 unset($_SESSION['datos_cita']);
                 unset($_SESSION['idhora']);
                 unset($_SESSION['principal']);
                 unset($_SESSION['secundario']);
                 unset($_SESSION['servicio']);
 
+                // Redirigir
                 header("Location: ../index.php");
                 exit;
             } else {
@@ -105,6 +145,7 @@ if (isset($_POST['registrar_cita'])) {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
