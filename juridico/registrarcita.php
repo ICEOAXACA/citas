@@ -2,7 +2,6 @@
 session_start();
 require_once '../php/c.php';
 
-// Obtener el valor de la sesión
 $secundario = $_SESSION['secundario'] ?? null;
 if (!$secundario) {
   die("No hay sesión activa o 'secundario' no está definido.");
@@ -13,16 +12,14 @@ $horas_disponibles = [];
 $fechas_completas = [];
 $horas_ocupadas_por_fecha = [];
 
-// 1. Fechas inhábiles
 $sql = "SELECT fecha FROM dias_inhabiles WHERE estatus = 't' AND fecha IS NOT NULL";
 $resultado = pg_query($conexion, $sql);
 if ($resultado) {
   while ($fila = pg_fetch_assoc($resultado)) {
-    $fechas_inhabiles[] = date("d-m-Y", strtotime($fila['fecha']));
+    $fechas_inhabiles[] = date("Y-m-d", strtotime($fila['fecha']));
   }
 }
 
-// 2. Horas disponibles
 $sql_horas = "SELECT id, hora FROM horas WHERE estatus = 't' ORDER BY hora ASC";
 $resultado_horas = pg_query($conexion, $sql_horas);
 $horas_id_map = [];
@@ -33,7 +30,6 @@ if ($resultado_horas) {
   }
 }
 
-// 3. Fechas con todas las horas ocupadas (filtradas por servicio_principal_id)
 $sql_ocupadas = "
   SELECT fecha
   FROM historial_citas
@@ -46,11 +42,10 @@ $sql_ocupadas = "
 $resultado_ocupadas = pg_query($conexion, $sql_ocupadas);
 if ($resultado_ocupadas) {
   while ($fila = pg_fetch_assoc($resultado_ocupadas)) {
-    $fechas_completas[] = date("d-m-Y", strtotime($fila['fecha']));
+    $fechas_completas[] = date("Y-m-d", strtotime($fila['fecha']));
   }
 }
 
-// 4. Horas ocupadas por fecha (filtradas por servicio_principal_id)
 $sql_horas_ocupadas = "
   SELECT fecha, hora_id
   FROM historial_citas
@@ -59,7 +54,7 @@ $sql_horas_ocupadas = "
 $res_horas_ocupadas = pg_query($conexion, $sql_horas_ocupadas);
 if ($res_horas_ocupadas) {
   while ($fila = pg_fetch_assoc($res_horas_ocupadas)) {
-    $fecha = date("d-m-Y", strtotime($fila['fecha']));
+    $fecha = date("Y-m-d", strtotime($fila['fecha']));
     $hora = $horas_id_map[$fila['hora_id']] ?? null;
     if ($hora) {
       $horas_ocupadas_por_fecha[$fecha][] = $hora;
@@ -67,19 +62,16 @@ if ($res_horas_ocupadas) {
   }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <title>Citas ICEO</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- jQuery & UI -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/i18n/jquery-ui-i18n.min.js"></script>
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
   <style>
@@ -145,12 +137,14 @@ if ($res_horas_ocupadas) {
         <label class="form-label">Hora de cita *</label>
         <div id="hora_grid" class="hora-grid">
           <?php foreach ($horas_disponibles as $hora): ?>
-            <button type="button" class="hora-btn disabled" data-hour="<?= htmlspecialchars($hora) ?>" disabled>
+            <?php $hora_id = array_search($hora, $horas_id_map); ?>
+            <button type="button" class="hora-btn disabled" data-hour="<?= htmlspecialchars($hora) ?>" data-id="<?= $hora_id ?>" disabled>
               <?= htmlspecialchars($hora) ?>
             </button>
           <?php endforeach; ?>
         </div>
         <input type="hidden" name="hora_cita" id="hora_cita" required>
+        <input type="hidden" name="idhora" id="idhora" required>
       </div>
 
       <div id="errorMensaje" class="text-danger text-center mb-3" style="display:none;">
@@ -165,18 +159,24 @@ if ($res_horas_ocupadas) {
 
   <script>
     $(document).ready(function () {
+      $.datepicker.setDefaults($.datepicker.regional["es"]);
       const diasInhabiles = <?= json_encode($fechas_inhabiles) ?>;
       const diasCompletos = <?= json_encode($fechas_completas) ?>;
       const horasOcupadas = <?= json_encode($horas_ocupadas_por_fecha) ?>;
       const fechasInhabilitadas = diasInhabiles.concat(diasCompletos);
 
+      const today = new Date();
+      const currentYear = today.getFullYear();
+
       $("#fecha_cita").datepicker({
-        minDate: 0,
-        dateFormat: "dd-mm-yy",
+        minDate: today,
+        maxDate: new Date(currentYear, 11, 31),
+        changeMonth: true,
+        changeYear: false,
+        yearRange: `${currentYear}:${currentYear}`,
+        dateFormat: "yy-mm-dd", // FORMATO COMPATIBLE CON PHP
         beforeShowDay: function (date) {
-          const d = ("0" + date.getDate()).slice(-2) + "-" +
-                    ("0" + (date.getMonth() + 1)).slice(-2) + "-" +
-                    date.getFullYear();
+          const d = date.toISOString().split('T')[0]; // yyyy-mm-dd
           const day = date.getDay();
           if (day === 0 || day === 6 || fechasInhabilitadas.includes(d)) {
             return [false, ""];
@@ -185,10 +185,18 @@ if ($res_horas_ocupadas) {
         },
         onSelect: function (fecha) {
           const ocupadas = horasOcupadas[fecha] || [];
+          const hoy = new Date();
+          const fechaSeleccionada = new Date(fecha);
 
           $('.hora-btn').each(function () {
             const hora = $(this).data('hour');
-            if (ocupadas.includes(hora)) {
+            const [horaStr, minutoStr] = hora.split(':');
+            const horaBtn = new Date(fechaSeleccionada);
+            horaBtn.setHours(parseInt(horaStr), parseInt(minutoStr), 0, 0);
+
+            const esHoraPasada = (fechaSeleccionada.toDateString() === hoy.toDateString()) && (horaBtn <= hoy);
+
+            if (ocupadas.includes(hora) || esHoraPasada) {
               $(this).addClass('disabled').prop('disabled', true);
             } else {
               $(this).removeClass('disabled').prop('disabled', false);
@@ -198,7 +206,12 @@ if ($res_horas_ocupadas) {
       });
 
       $('#hora_grid').on('click', '.hora-btn:not(.disabled)', function () {
-        $('#hora_cita').val($(this).data('hour'));
+        const hora = $(this).data('hour');
+        const idhora = $(this).data('id');
+
+        $('#hora_cita').val(hora);
+        $('#idhora').val(idhora);
+
         $('.hora-btn').removeClass('selected');
         $(this).addClass('selected');
       });
@@ -206,9 +219,14 @@ if ($res_horas_ocupadas) {
       $('#formularioCita').on('submit', function (e) {
         const telefono = $('input[name="telefono"]').val().trim();
         const correo = $('input[name="correo"]').val().trim();
+        const horaCita = $('#hora_cita').val().trim(); 
+
         if (!telefono && !correo) {
           e.preventDefault();
           $('#errorMensaje').show();
+        } else if (!horaCita) {
+          e.preventDefault();
+          alert("Por favor, selecciona una hora para la cita.");
         } else {
           $('#errorMensaje').hide();
         }

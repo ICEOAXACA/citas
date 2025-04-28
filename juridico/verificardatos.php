@@ -1,55 +1,107 @@
 <?php
 session_start();
+require_once '../php/c.php';
 
-// Recuperar los datos del formulario
-$nombre = $_POST['nombre'] ?? '';
-$telefono = $_POST['telefono'] ?? '';
-$correo = $_POST['correo'] ?? '';
-$folio = $_POST['folio'] ?? '';
-$fecha_cita = $_POST['fecha_cita'] ?? '';
-$hora_cita = $_POST['hora_cita'] ?? '';
+// Guardar idhora si viene desde POST
+if (isset($_POST['idhora'])) {
+    $_SESSION['idhora'] = $_POST['idhora'];
+}
 
-// Guardar los datos en sesión por si se necesitan después
-$_SESSION['datos_cita'] = compact('nombre', 'telefono', 'correo', 'folio', 'fecha_cita', 'hora_cita');
+// Guardar datos del ciudadano si vienen desde POST
+if (
+    isset($_POST['nombre'], $_POST['telefono'], $_POST['correo'], $_POST['folio'], $_POST['fecha_cita'], $_POST['hora_cita']) &&
+    (!isset($_SESSION['datos_cita']) || empty($_SESSION['datos_cita']))
+) {
+    $_SESSION['datos_cita'] = [
+        'nombre' => $_POST['nombre'],
+        'telefono' => $_POST['telefono'],
+        'correo' => $_POST['correo'],
+        'folio' => $_POST['folio'],
+        'fecha_cita' => $_POST['fecha_cita'],
+        'hora_cita' => $_POST['hora_cita']
+    ];
+}
 
-// Recuperar sesiones
+// Recuperar datos desde sesión
+$datos_cita = $_SESSION['datos_cita'] ?? [];
+
+$nombre = $datos_cita['nombre'] ?? '';
+$telefono = $datos_cita['telefono'] ?? '';
+$correo = $datos_cita['correo'] ?? '';
+$folio = $datos_cita['folio'] ?? '';
+$fecha_cita = $datos_cita['fecha_cita'] ?? '';
+$hora_cita = $datos_cita['hora_cita'] ?? '';
+
 $principal = $_SESSION['principal'] ?? null;
 $secundario = $_SESSION['secundario'] ?? null;
 $servicio = $_SESSION['servicio'] ?? null;
+$idhora = $_SESSION['idhora'] ?? null;
 
-// Conexión a PostgreSQL
-require_once '../php/c.php'; // tu archivo de conexión con $conexion
+// Obtener nombres desde BD
+$nombre_departamento = $nombre_servicio_principal = $nombre_servicio_secundario = 'No encontrado';
 
-// 1. Obtener nombre del departamento principal
-$nombre_departamento = 'No encontrado';
 if ($principal) {
-    $query = "SELECT nombre FROM departamentos WHERE id = $1";
-    $resultado = pg_query_params($conexion, $query, [$principal]);
-    if ($resultado && pg_num_rows($resultado) > 0) {
-        $fila = pg_fetch_assoc($resultado);
-        $nombre_departamento = $fila['nombre'];
-    }
+    $res = pg_query_params($conexion, "SELECT nombre FROM departamentos WHERE id = $1", [$principal]);
+    if ($res && pg_num_rows($res) > 0) $nombre_departamento = pg_fetch_result($res, 0, 'nombre');
 }
-
-// 2. Obtener nombre del servicio principal
-$nombre_servicio_principal = 'No encontrado';
 if ($secundario) {
-    $query2 = "SELECT nombre FROM servicios_principales WHERE id = $1";
-    $resultado2 = pg_query_params($conexion, $query2, [$secundario]);
-    if ($resultado2 && pg_num_rows($resultado2) > 0) {
-        $fila2 = pg_fetch_assoc($resultado2);
-        $nombre_servicio_principal = $fila2['nombre'];
-    }
+    $res = pg_query_params($conexion, "SELECT nombre FROM servicios_principales WHERE id = $1", [$secundario]);
+    if ($res && pg_num_rows($res) > 0) $nombre_servicio_principal = pg_fetch_result($res, 0, 'nombre');
+}
+if ($servicio) {
+    $res = pg_query_params($conexion, "SELECT nombre FROM servicios_secundarios WHERE id = $1", [$servicio]);
+    if ($res && pg_num_rows($res) > 0) $nombre_servicio_secundario = pg_fetch_result($res, 0, 'nombre');
 }
 
-// 3. Obtener nombre del servicio secundario
-$nombre_servicio_secundario = 'No encontrado';
-if ($servicio) {
-    $query3 = "SELECT nombre FROM servicios_secundarios WHERE id = $1";
-    $resultado3 = pg_query_params($conexion, $query3, [$servicio]);
-    if ($resultado3 && pg_num_rows($resultado3) > 0) {
-        $fila3 = pg_fetch_assoc($resultado3);
-        $nombre_servicio_secundario = $fila3['nombre'];
+// Insertar si se presionó el botón
+if (isset($_POST['registrar_cita'])) {
+    if (!$idhora || !$nombre || (!$telefono && !$correo) || !$fecha_cita) {
+        $mensaje_error = "❌ Debes proporcionar al menos un número de teléfono o un correo electrónico.";
+    } else {
+        // Validación para evitar fechas inválidas o pasadas
+        $fecha_obj = DateTime::createFromFormat('Y-m-d', $fecha_cita);
+        $hoy = new DateTime();
+        $hoy->setTime(0, 0, 0);
+
+        if (!$fecha_obj) {
+            $mensaje_error = "❌ Fecha inválida. Intenta seleccionar otra.";
+        } elseif ($fecha_obj < $hoy) {
+            $mensaje_error = "❌ No puedes registrar una cita en una fecha pasada.";
+        } else {
+            $fecha_formateada = $fecha_obj->format('Y-m-d');
+
+            $params = [
+                $nombre,
+                $telefono,
+                $correo,
+                $fecha_formateada,
+                $idhora,
+                $folio,
+                $principal,
+                $secundario,
+                $servicio
+            ];
+
+            $query = "INSERT INTO historial_citas (
+                nombre_contribuyente, telefono, correo, fecha, hora_id, folio,
+                departamento_id, servicio_principal_id, servicio_secundario_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)";
+
+            $resultado_insert = pg_query_params($conexion, $query, $params);
+
+            if ($resultado_insert && pg_affected_rows($resultado_insert) > 0) {
+                unset($_SESSION['datos_cita']);
+                unset($_SESSION['idhora']);
+                unset($_SESSION['principal']);
+                unset($_SESSION['secundario']);
+                unset($_SESSION['servicio']);
+
+                header("Location: ../index.php");
+                exit;
+            } else {
+                $mensaje_error = "❌ Error al registrar la cita: " . pg_last_error($conexion);
+            }
+        }
     }
 }
 ?>
@@ -57,87 +109,65 @@ if ($servicio) {
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Verifica tu cita | ICEO</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <link rel="icon" type="image/png" href="../Imagenes/favicon.ico">
+    <title>Acuse de Cita | ICEO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background-color: #fdfdfd; font-family: 'Segoe UI', sans-serif; }
+        .acuse-container { max-width: 900px; margin: auto; background: white; padding: 40px; border: 1px solid #ccc; margin-top: 40px; }
+        .acuse-header { text-align: center; margin-bottom: 30px; }
+        .acuse-header img { height: 60px; }
+        .acuse-title { font-size: 1.8rem; font-weight: bold; margin-top: 10px; text-transform: uppercase; }
+        .seccion { font-weight: bold; font-size: 1.1rem; color: #2c3e50; margin-bottom: 15px; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
+        .dato-label { font-weight: 600; color: #444; }
+        .dato { margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #ccc; }
+        .folio { font-size: 1.2rem; font-weight: bold; color: #2c3e50; }
+        .btn-imprimir { margin-top: 30px; text-align: center; }
+        .nota { font-size: 0.9rem; color: #666; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+        @media print { .btn-imprimir { display: none; } }
+    </style>
 </head>
 <body>
-<div class="container mt-4">
-    <!-- Logo superior -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="https://www.oaxaca.gob.mx/iceo/">
-            <img src="../Imagenes/logo1.png" alt="logo" style="height: 50px;">
-        </a>
+<div class="acuse-container">
+    <div class="acuse-header">
+        <img src="../Imagenes/logo1.png" alt="Logo">
+        <div class="acuse-title">Acuse de Cita</div>
+        <div class="text-muted">Instituto Catastral del Estado de Oaxaca</div>
     </div>
 
-    <!-- Encabezado -->
-    <h2 class="text-center mb-4">Verifica tu información</h2>
+    <?php if (!empty($mensaje_error)): ?>
+        <div class="alert alert-danger"><?= $mensaje_error ?></div>
+    <?php endif; ?>
 
-    <!-- Datos del formulario -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <div class="mb-3">
-                <label class="form-label">Nombre completo:</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($nombre) ?></p>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Teléfono:</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($telefono) ?: 'No proporcionado' ?></p>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Correo electrónico:</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($correo) ?: 'No proporcionado' ?></p>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Folio Jurídico:</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($folio) ?></p>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Fecha de la cita:</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($fecha_cita) ?></p>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Hora de la cita:</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($hora_cita) ?></p>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Departamento principal:</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($nombre_departamento) ?></p>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Servicio principal:</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($nombre_servicio_principal) ?></p>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Servicio secundario:</label>
-                <p class="form-control-plaintext"><?= htmlspecialchars($nombre_servicio_secundario) ?></p>
-            </div>
-
-            <!-- Botones -->
-            <div class="d-flex justify-content-between mt-4">
-                <form action="guardar_datos.php" method="POST">
-                    <?php foreach ($_SESSION['datos_cita'] as $key => $value): ?>
-                        <input type="hidden" name="<?= htmlspecialchars($key) ?>" value="<?= htmlspecialchars($value) ?>">
-                    <?php endforeach; ?>
-                    <button type="submit" class="btn btn-primary">Confirmar y Guardar</button>
-                </form>
-            </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="seccion">Datos del ciudadano</div>
+            <div><span class="dato-label">Nombre completo:</span> <div class="dato"><?= htmlspecialchars($nombre) ?></div></div>
+            <div><span class="dato-label">Teléfono:</span> <div class="dato"><?= htmlspecialchars($telefono ?: 'No proporcionado') ?></div></div>
+            <div><span class="dato-label">Correo electrónico:</span> <div class="dato"><?= htmlspecialchars($correo ?: 'No proporcionado') ?></div></div>
+        </div>
+        <div class="col-md-6">
+            <div class="seccion">Detalles de la cita</div>
+            <div><span class="dato-label">Folio jurídico:</span> <div class="dato folio"><?= htmlspecialchars($folio) ?></div></div>
+            <div><span class="dato-label">Fecha:</span> <div class="dato"><?= htmlspecialchars($fecha_cita) ?></div></div>
+            <div><span class="dato-label">Hora:</span> <div class="dato"><?= htmlspecialchars($hora_cita) ?></div></div>
         </div>
     </div>
 
+    <div class="seccion mt-4">Servicios solicitados</div>
+    <div><span class="dato-label">Departamento:</span> <div class="dato"><?= htmlspecialchars($nombre_departamento) ?></div></div>
+    <div><span class="dato-label">Área del Servicio:</span> <div class="dato"><?= htmlspecialchars($nombre_servicio_principal) ?></div></div>
+    <div><span class="dato-label">Servicio seleccionado:</span> <div class="dato"><?= htmlspecialchars($nombre_servicio_secundario) ?></div></div>
 
-<!-- JS de Bootstrap -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <form method="post">
+        <div class="btn-imprimir">
+            <button type="submit" name="registrar_cita" class="btn btn-success">Registrar cita</button>
+        </div>
+    </form>
+
+    <div class="nota">
+        Guarda este acuse como comprobante. Si necesitas cambiar tu cita, contacta al instituto directamente.
+    </div>
+</div>
 </body>
 </html>

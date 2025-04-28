@@ -53,7 +53,7 @@ if (isset($_SESSION['secundario'])) {
 
     <!-- Título -->
     <header class="text-center mb-4">
-      <h2>REQUERIMIENTOS PARA REGISTRAR LA CITA</h2>
+      <h2>REQUERIMIENTOS PARA PRESENTARSE A LA CITA</h2>
     </header>
 
     <!-- Lista dinámica desde PostgreSQL -->
