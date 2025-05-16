@@ -45,15 +45,18 @@ $nombre_departamento = $nombre_servicio_principal = $nombre_servicio_secundario 
 // Obtener nombres desde la base de datos
 if ($principal) {
     $res = pg_query_params($conexion, "SELECT nombre FROM departamentos WHERE id = $1", [$principal]);
-    if ($res && pg_num_rows($res) > 0) $nombre_departamento = pg_fetch_result($res, 0, 'nombre');
+    if ($res && pg_num_rows($res) > 0)
+        $nombre_departamento = pg_fetch_result($res, 0, 'nombre');
 }
 if ($secundario) {
     $res = pg_query_params($conexion, "SELECT nombre FROM servicios_principales WHERE id = $1", [$secundario]);
-    if ($res && pg_num_rows($res) > 0) $nombre_servicio_principal = pg_fetch_result($res, 0, 'nombre');
+    if ($res && pg_num_rows($res) > 0)
+        $nombre_servicio_principal = pg_fetch_result($res, 0, 'nombre');
 }
 if ($servicio) {
     $res = pg_query_params($conexion, "SELECT nombre FROM servicios_secundarios WHERE id = $1", [$servicio]);
-    if ($res && pg_num_rows($res) > 0) $nombre_servicio_secundario = pg_fetch_result($res, 0, 'nombre');
+    if ($res && pg_num_rows($res) > 0)
+        $nombre_servicio_secundario = pg_fetch_result($res, 0, 'nombre');
 }
 
 // Procesar el registro de cita
@@ -102,8 +105,8 @@ if (isset($_POST['registrar_cita'])) {
                     'fecha_cita' => $fecha_cita,
                     'hora_cita' => $hora_cita,
                     'departamento' => $nombre_departamento,
-                    'servicio_principal' => $nombre_servicio_principal,
-                    'servicio_secundario' => $nombre_servicio_secundario,
+                    'nombre_servicio_principal' => $nombre_servicio_principal,
+                    'nombre_servicio_secundario' => $nombre_servicio_secundario,
                     'logo' => $logo_path
                 ];
 
@@ -126,67 +129,150 @@ if (isset($_POST['registrar_cita'])) {
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="utf-8">
     <title>Acuse de Cita | ICEO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #fdfdfd; font-family: 'Segoe UI', sans-serif; }
-        .acuse-container { max-width: 900px; margin: auto; background: white; padding: 40px; border: 1px solid #ccc; margin-top: 40px; }
-        .acuse-header { text-align: center; margin-bottom: 30px; }
-        .acuse-header img { height: 60px; }
-        .acuse-title { font-size: 1.8rem; font-weight: bold; margin-top: 10px; text-transform: uppercase; }
-        .seccion { font-weight: bold; font-size: 1.1rem; color: #2c3e50; margin-bottom: 15px; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
-        .dato-label { font-weight: 600; color: #444; }
-        .dato { margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #ccc; }
-        .folio { font-size: 1.2rem; font-weight: bold; color: #2c3e50; }
-        .btn-imprimir { margin-top: 30px; text-align: center; }
-        .nota { font-size: 0.9rem; color: #666; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
-        @media print { .btn-imprimir { display: none; } }
+        body {
+            background-color: #fdfdfd;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .acuse-container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 40px;
+            border: 1px solid #ccc;
+            margin-top: 40px;
+        }
+
+        .acuse-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .acuse-header img {
+            height: 60px;
+        }
+
+        .acuse-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        .seccion {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        .dato-label {
+            font-weight: 600;
+            color: #444;
+        }
+
+        .dato {
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #ccc;
+        }
+
+        .folio {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .btn-imprimir {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .nota {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        @media print {
+            .btn-imprimir {
+                display: none;
+            }
+        }
     </style>
 </head>
+
 <body>
-<div class="acuse-container">
-    <div class="acuse-header">
-        <img src="../Imagenes/logo1.png" alt="Logo">
-        <div class="acuse-title">Acuse de Cita</div>
-        <div class="text-muted">Instituto Catastral del Estado de Oaxaca</div>
-    </div>
-
-    <?php if (!empty($mensaje_error)): ?>
-        <div class="alert alert-danger"><?= $mensaje_error ?></div>
-    <?php endif; ?>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="seccion">Datos del ciudadano</div>
-            <div><span class="dato-label">Nombre completo:</span> <div class="dato"><?= htmlspecialchars($nombre) ?></div></div>
-            <div><span class="dato-label">Teléfono:</span> <div class="dato"><?= htmlspecialchars($telefono ?: 'No proporcionado') ?></div></div>
-            <div><span class="dato-label">Correo electrónico:</span> <div class="dato"><?= htmlspecialchars($correo ?: 'No proporcionado') ?></div></div>
+    <div class="acuse-container">
+        <div class="acuse-header">
+            <img src="../Imagenes/logo1.png" alt="Logo">
+            <div class="acuse-title">Acuse de Cita</div>
+            <div class="text-muted">Instituto Catastral del Estado de Oaxaca</div>
         </div>
-        <div class="col-md-6">
-            <div class="seccion">Detalles de la cita</div>
-            <div><span class="dato-label">Folio jurídico:</span> <div class="dato folio"><?= htmlspecialchars($folio) ?></div></div>
-            <div><span class="dato-label">Fecha:</span> <div class="dato"><?= htmlspecialchars($fecha_cita) ?></div></div>
-            <div><span class="dato-label">Hora:</span> <div class="dato"><?= htmlspecialchars($hora_cita) ?></div></div>
+
+        <?php if (!empty($mensaje_error)): ?>
+            <div class="alert alert-danger"><?= $mensaje_error ?></div>
+        <?php endif; ?>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="seccion">Datos del ciudadano</div>
+                <div><span class="dato-label">Nombre completo:</span>
+                    <div class="dato"><?= htmlspecialchars($nombre) ?></div>
+                </div>
+                <div><span class="dato-label">Teléfono:</span>
+                    <div class="dato"><?= htmlspecialchars($telefono ?: 'No proporcionado') ?></div>
+                </div>
+                <div><span class="dato-label">Correo electrónico:</span>
+                    <div class="dato"><?= htmlspecialchars($correo ?: 'No proporcionado') ?></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="seccion">Detalles de la cita</div>
+                <div><span class="dato-label">Folio jurídico:</span>
+                    <div class="dato folio"><?= htmlspecialchars($folio) ?></div>
+                </div>
+                <div><span class="dato-label">Fecha:</span>
+                    <div class="dato"><?= htmlspecialchars($fecha_cita) ?></div>
+                </div>
+                <div><span class="dato-label">Hora:</span>
+                    <div class="dato"><?= htmlspecialchars($hora_cita) ?></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion mt-4">Servicios solicitados</div>
+        <div><span class="dato-label">Departamento:</span>
+            <div class="dato"><?= htmlspecialchars($nombre_departamento) ?></div>
+        </div>
+        <div><span class="dato-label">Área del Servicio:</span>
+            <div class="dato"><?= htmlspecialchars($nombre_servicio_principal) ?></div>
+        </div>
+        <div><span class="dato-label">Servicio seleccionado:</span>
+            <div class="dato"><?= htmlspecialchars($nombre_servicio_secundario) ?></div>
+        </div>
+
+        <form method="post">
+            <div class="btn-imprimir">
+                <button type="submit" name="registrar_cita" class="btn btn-success">Registrar cita</button>
+            </div>
+        </form>
+
+        <div class="nota">
+            Guarda este acuse como comprobante. Si necesitas cambiar tu cita, contacta al instituto directamente.
         </div>
     </div>
-
-    <div class="seccion mt-4">Servicios solicitados</div>
-    <div><span class="dato-label">Departamento:</span> <div class="dato"><?= htmlspecialchars($nombre_departamento) ?></div></div>
-    <div><span class="dato-label">Área del Servicio:</span> <div class="dato"><?= htmlspecialchars($nombre_servicio_principal) ?></div></div>
-    <div><span class="dato-label">Servicio seleccionado:</span> <div class="dato"><?= htmlspecialchars($nombre_servicio_secundario) ?></div></div>
-
-    <form method="post">
-        <div class="btn-imprimir">
-            <button type="submit" name="registrar_cita" class="btn btn-success">Registrar cita</button>
-        </div>
-    </form>
-
-    <div class="nota">
-        Guarda este acuse como comprobante. Si necesitas cambiar tu cita, contacta al instituto directamente.
-    </div>
-</div>
 </body>
+
 </html>
