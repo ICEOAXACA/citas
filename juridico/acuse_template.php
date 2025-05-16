@@ -2,61 +2,84 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>Acuse de Cita</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 14px; color: #333; padding: 20px; }
-        .header { width: 100%; position: relative; margin-bottom: 20px; }
-        .logo { position: absolute; top: 0; right: 0; height: 70px; }
-        .title { font-size: 22px; font-weight: bold; }
-        .subtitle { font-size: 14px; color: #555; margin-top: 5px; }
-        .section { margin-top: 20px; }
-        .section-title { font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px; }
-        .info { margin-bottom: 5px; }
-        .requisitos { margin-top: 10px; }
-        .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; border-top: 1px solid #ccc; padding-top: 10px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            width: 100px;
+        }
+        .header, .footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .content {
+            margin-top: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .requisitos {
+            list-style-type: decimal;
+            margin-left: 20px;
+        }
     </style>
 </head>
 <body>
+    <div class="logo">
+        <img src="<?= $logo_src ?>" alt="Logo">
+    </div>
+
     <div class="header">
-        <img src="<?= $logo_src ?>" class="logo" alt="Logo ICEO">
-        <div class="title">Acuse de Cita</div>
-        <div class="subtitle">Instituto Catastral del Estado de Oaxaca</div>
+        <h1>Acuse de Cita</h1>
+        <p>Folio: <?= $folio ?></p>
     </div>
 
-    <div class="section">
-        <div class="section-title">Datos del Ciudadano</div>
-        <div class="info"><strong>Nombre:</strong> <?= htmlspecialchars($nombre) ?></div>
-        <div class="info"><strong>Teléfono:</strong> <?= htmlspecialchars($telefono) ?></div>
-        <div class="info"><strong>Correo Electrónico:</strong> <?= htmlspecialchars($correo) ?></div>
-        <div class="info"><strong>Departamento:</strong> <?= htmlspecialchars($departamento) ?></div>
-    </div>
+    <div class="content">
+        <div class="section">
+            <div class="section-title">Datos del Ciudadano</div>
+            <p><strong>Nombre:</strong> <?= $nombre ?></p>
+            <p><strong>Teléfono:</strong> <?= $telefono ?></p>
+            <p><strong>Correo Electrónico:</strong> <?= $correo ?></p>
+            <p><strong>Departamento:</strong> <?= $departamento ?></p>
+        </div>
 
-    <div class="section">
-        <div class="section-title">Detalles de la Cita</div>
-        <div class="info"><strong>Folio Jurídico:</strong> <?= htmlspecialchars($folio) ?></div>
-        <div class="info"><strong>Fecha:</strong> <?= htmlspecialchars($fecha_cita) ?></div>
-        <div class="info"><strong>Hora:</strong> <?= htmlspecialchars($hora_cita) ?></div>
-    </div>
+        <div class="section">
+            <div class="section-title">Detalles de la Cita</div>
+            <p><strong>Fecha:</strong> <?= $fecha_cita ?></p>
+            <p><strong>Hora:</strong> <?= $hora_cita ?></p>
+        </div>
 
-    <div class="section">
-        <div class="section-title">Servicios Solicitados</div>
-        <div class="info"><strong>Departamento:</strong> <?= htmlspecialchars($departamento) ?></div>
-        <div class="info"><strong>Servicio Principal:</strong> <?= htmlspecialchars($nombre_servicio_principal) ?></div>
-        <div class="info"><strong>Servicio Secundario:</strong> <?= htmlspecialchars($nombre_servicio_secundario) ?></div>
-    </div>
+        <div class="section">
+            <div class="section-title">Servicios Solicitados</div>
+            <p><strong>Servicio Principal:</strong> <?= $nombre_servicio_principal ?></p>
+            <p><strong>Servicio Secundario:</strong> <?= $nombre_servicio_secundario ?></p>
+        </div>
 
-    <?php if (!empty($requisitos_filtrados)): ?>
+        <?php if (!empty($requisitos_filtrados)): ?>
         <div class="section">
             <div class="section-title">Requisitos para la Cita</div>
             <ul class="requisitos">
                 <?php foreach ($requisitos_filtrados as $index => $req): ?>
-                    <li><?= $index + 1 ?>. <?= htmlspecialchars($req) ?></li>
+                <li><?= $index + 1 ?>. <?= htmlspecialchars($req) ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
-    <?php endif; ?>
+        <?php endif; ?>
+    </div>
 
     <div class="footer">
-        Guarda este acuse como comprobante. Para cambios, contacta al instituto.
+        <p>Generado el <?= date('d/m/Y H:i:s') ?></p>
     </div>
 </body>
 </html>

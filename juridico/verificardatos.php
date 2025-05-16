@@ -56,23 +56,6 @@ if ($servicio) {
     if ($res && pg_num_rows($res) > 0) $nombre_servicio_secundario = pg_fetch_result($res, 0, 'nombre');
 }
 
-// Obtener requisitos
-$requisitos_filtrados = [];
-if (is_numeric($secundario)) {
-    $sql = "
-        SELECT r.nombre
-        FROM requisitos r
-        JOIN requisitos_servicios_secundarios rss ON r.id = rss.requisito_id
-        WHERE rss.servicio_secundario_id = $1 AND r.estatus = 't' AND rss.estatus = 't'
-    ";
-    $resultado = pg_query_params($conexion, $sql, [$secundario]);
-    if ($resultado && pg_num_rows($resultado) > 0) {
-        while ($fila = pg_fetch_assoc($resultado)) {
-            $requisitos_filtrados[] = $fila['nombre'];
-        }
-    }
-}
-
 // Procesar el registro de cita
 if (isset($_POST['registrar_cita'])) {
     if (!$idhora || !$nombre || (!$telefono && !$correo) || !$fecha_cita) {
@@ -109,34 +92,29 @@ if (isset($_POST['registrar_cita'])) {
             $resultado_insert = pg_query_params($conexion, $query, $params);
 
             if ($resultado_insert && pg_affected_rows($resultado_insert) > 0) {
-                // Generar PDF
+                // Preparar datos del PDF
                 $logo_path = $_SERVER['DOCUMENT_ROOT'] . '/citasiceo/imagenes/logoiceo2017.png';
-                $logo_src = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
+                $_SESSION['acuse_pdf'] = [
+                    'nombre' => $nombre,
+                    'telefono' => $telefono,
+                    'correo' => $correo,
+                    'folio' => $folio,
+                    'fecha_cita' => $fecha_cita,
+                    'hora_cita' => $hora_cita,
+                    'departamento' => $nombre_departamento,
+                    'servicio_principal' => $nombre_servicio_principal,
+                    'servicio_secundario' => $nombre_servicio_secundario,
+                    'logo' => $logo_path
+                ];
 
-                $departamento = $nombre_departamento; // ✅ Esto evita el error de variable indefinida
-
-                ob_start();
-                include 'acuse_template.php';
-                $html = ob_get_clean();
-
-                $options = new Options();
-                $options->set('isHtml5ParserEnabled', true);
-                $options->set('isPhpEnabled', true);
-                $dompdf = new Dompdf($options);
-                $dompdf->loadHtml($html);
-                $dompdf->setPaper('A4', 'portrait');
-                $dompdf->render();
-                $dompdf->stream("acuse_cita_$folio.pdf", ["Attachment" => true]);
-
-                // Limpiar sesiones
+                // Limpiar sesión (datos ya pasaron a sesión temporal)
                 unset($_SESSION['datos_cita']);
                 unset($_SESSION['idhora']);
                 unset($_SESSION['principal']);
                 unset($_SESSION['secundario']);
                 unset($_SESSION['servicio']);
 
-                // Redirigir
-                header("Location: ../index.php");
+                header("Location: acuse_generado.php");
                 exit;
             } else {
                 $mensaje_error = "❌ Error al registrar la cita: " . pg_last_error($conexion);
