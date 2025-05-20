@@ -16,7 +16,7 @@ if(!isset($_SESSION['roles']) || $_SESSION ['roles'] != '2'){
     <title>Usuario</title>
 </head>
 <body>
-    <a href="php/cerrar.php" class="btn btn-primary"> Cerrar Sesion </a>
+    <a href="../php/cerrar.php" class="btn btn-primary"> Cerrar Sesion </a>
 
     <h1 class ="text-center"> Bienvenido</h1>
 
