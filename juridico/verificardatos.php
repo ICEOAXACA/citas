@@ -272,7 +272,7 @@ if (isset($_POST['registrar_cita'])) {
         </div>
 
         <div class="nota">
-            Guarda este acuse como comprobante. Si necesitas cambiar tu cita, contacta al instituto directamente.
+            Registre su cita y guarde su acuse. Le recomendamos presentarse con al menos 10 minutos de anticipación.
         </div>
     </div>
 </body>

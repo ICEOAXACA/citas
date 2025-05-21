@@ -46,7 +46,7 @@ Swal.fire({
     title: '¡Cita registrada!',
     text: 'El acuse se descargará automáticamente.',
     showConfirmButton: false,
-    timer: 4000
+    timer: 3000
 });
 const link = document.createElement('a');
 link.href = 'data:application/pdf;base64,<?= $pdf_base64 ?>';
