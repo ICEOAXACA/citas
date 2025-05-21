@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['departamento'])) {
         <form action="#" method="POST">
           <!-- Departamento -->
           <div class="mb-3">
-            <label for="departamento" class="form-label">Departamento</label>
+            <label for="departamento" class="form-label">Selecciona un departamento</label>
             <select class="form-select" id="departamento" name="departamento" required>
               <option value="" selected disabled>Seleccione un departamento</option>
               <?php

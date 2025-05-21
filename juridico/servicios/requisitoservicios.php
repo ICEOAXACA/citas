@@ -140,6 +140,8 @@ if (isset($_SESSION['secundario'])) {
 
         <!-- Botón de siguiente -->
         <div class="text-center mt-4">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()">Regresar</button>
+
           <a id="btnSiguiente" href="../registrarcita.php" class="btn btn-primary disabled" tabindex="-1" aria-disabled="true">
             Siguiente
           </a>

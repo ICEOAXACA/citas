@@ -137,17 +137,18 @@ if (isset($_POST['registrar_cita'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #fdfdfd;
+            background: url('../Imagenes/Fondo.jpeg') no-repeat center center fixed;
+            background-size: cover;
             font-family: 'Segoe UI', sans-serif;
         }
 
         .acuse-container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 40px;
-            border: 1px solid #ccc;
-            margin-top: 40px;
+            background-color: rgba(255, 255, 255, 0.96);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            margin: 40px auto;
         }
 
         .acuse-header {
@@ -263,16 +264,16 @@ if (isset($_POST['registrar_cita'])) {
             <div class="dato"><?= htmlspecialchars($nombre_servicio_secundario) ?></div>
         </div>
 
-        <form method="post">
-            <div class="btn-imprimir">
+        <div class="d-flex justify-content-center align-items-center gap-3 mt-4 btn-imprimir">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()">Regresar</button>
+            <form method="post" class="m-0">
                 <button type="submit" name="registrar_cita" class="btn btn-success">Registrar cita</button>
-            </div>
-        </form>
+            </form>
+        </div>
 
         <div class="nota">
             Guarda este acuse como comprobante. Si necesitas cambiar tu cita, contacta al instituto directamente.
         </div>
     </div>
 </body>
-
 </html>

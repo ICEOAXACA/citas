@@ -71,7 +71,6 @@ if ($res_horas_ocupadas) {
   <title>Registro de Cita | ICEO</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
-  <!-- Bootstrap + jQuery UI -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
@@ -215,77 +214,115 @@ if ($res_horas_ocupadas) {
         </div>
 
         <div class="text-center">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()">Regresar</button>
+
           <button type="submit" class="btn btn-primary">Siguiente</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script>
-    $(function () {
-      $.datepicker.setDefaults($.datepicker.regional["es"]);
-      const diasInhabiles = <?= json_encode($fechas_inhabiles) ?>;
-      const diasCompletos = <?= json_encode($fechas_completas) ?>;
-      const horasOcupadas = <?= json_encode($horas_ocupadas_por_fecha) ?>;
-      const fechasInhabilitadas = diasInhabiles.concat(diasCompletos);
-      const hoy = new Date();
+<script>
+  $(function () {
+    $.datepicker.setDefaults($.datepicker.regional["es"]);
 
-      $("#fecha_cita").datepicker({
-        minDate: hoy,
-        maxDate: new Date(hoy.getFullYear(), 11, 31),
-        changeMonth: true,
-        changeYear: false,
-        yearRange: `${hoy.getFullYear()}:${hoy.getFullYear()}`,
-        dateFormat: "yy-mm-dd",
-        beforeShowDay: function (date) {
-          const d = date.toISOString().split('T')[0];
-          return [(date.getDay() !== 0 && date.getDay() !== 6 && !fechasInhabilitadas.includes(d)), ""];
-        },
-        onSelect: function (fecha) {
-          const ocupadas = horasOcupadas[fecha] || [];
-          const fechaSeleccionada = new Date(fecha);
+    const diasInhabiles = <?= json_encode($fechas_inhabiles) ?>;
+    const diasCompletos = <?= json_encode($fechas_completas) ?>;
+    const horasOcupadas = <?= json_encode($horas_ocupadas_por_fecha) ?>;
+    const fechasInhabilitadas = diasInhabiles.concat(diasCompletos);
+    const horasHoy = <?= json_encode($horas_disponibles) ?>;
+    const hoy = new Date();
 
-          $('.hora-btn').each(function () {
-            const hora = $(this).data('hour');
-            const [h, m] = hora.split(':');
-            const horaCompleta = new Date(fechaSeleccionada);
-            horaCompleta.setHours(parseInt(h), parseInt(m), 0);
-
-            const esPasada = fechaSeleccionada.toDateString() === hoy.toDateString() && horaCompleta <= hoy;
-
-            if (ocupadas.includes(hora) || esPasada) {
-              $(this).addClass('disabled').prop('disabled', true);
-            } else {
-              $(this).removeClass('disabled').prop('disabled', false);
-            }
-          });
-        }
-      });
-
-      $('#hora_grid').on('click', '.hora-btn:not(.disabled)', function () {
-        $('#hora_cita').val($(this).data('hour'));
-        $('#idhora').val($(this).data('id'));
-        $('.hora-btn').removeClass('selected');
-        $(this).addClass('selected');
-      });
-
-      $('#formularioCita').on('submit', function (e) {
-        const tel = $('input[name="telefono"]').val().trim();
-        const email = $('input[name="correo"]').val().trim();
-        const hora = $('#hora_cita').val().trim();
-
-        if (!tel && !email) {
-          e.preventDefault();
-          $('#errorMensaje').show();
-        } else if (!hora) {
-          e.preventDefault();
-          alert("Por favor, selecciona una hora para la cita.");
+    function actualizarHoras(fecha) {
+      const ocupadas = horasOcupadas[fecha] || [];
+      const fechaSeleccionada = new Date(fecha + 'T00:00:00'); // Forzar medianoche local
+      const ahora = new Date();
+      $('.hora-btn').each(function () {
+        const hora = $(this).data('hour');
+        const [h, m] = hora.split(':');
+        // Crear un objeto Date con la fecha seleccionada y la hora del botón
+        const horaCompleta = new Date(fechaSeleccionada);
+        horaCompleta.setHours(parseInt(h), parseInt(m), 0, 0);
+        // Si la fecha es hoy y la hora ya pasó, deshabilitar
+        const esHoy = fechaSeleccionada.toDateString() === ahora.toDateString();
+        const esPasada = esHoy && horaCompleta.getTime() <= ahora.getTime();
+        if (ocupadas.includes(hora) || esPasada) {
+          $(this).addClass('disabled').prop('disabled', true);
         } else {
-          $('#errorMensaje').hide();
+          $(this).removeClass('disabled').prop('disabled', false);
         }
       });
+    }
+
+    $("#fecha_cita").datepicker({
+      minDate: hoy,
+      maxDate: new Date(hoy.getFullYear(), 11, 31),
+      changeMonth: true,
+      changeYear: false,
+      yearRange: `${hoy.getFullYear()}:${hoy.getFullYear()}`,
+      dateFormat: "yy-mm-dd",
+      beforeShowDay: function (date) {
+        const d = date.toISOString().split('T')[0];
+        const esFinDeSemana = (date.getDay() === 0 || date.getDay() === 6);
+        const esInhabil = fechasInhabilitadas.includes(d);
+
+        if (esFinDeSemana || esInhabil) {
+          return [false, ""];
+        }
+
+        const ahora = new Date();
+        const esHoy = date.toDateString() === ahora.toDateString();
+
+        if (esHoy) {
+          const ocupadas = horasOcupadas[d] || [];
+          const quedanHorasDisponibles = horasHoy.some(hora => {
+            if (ocupadas.includes(hora)) return false;
+
+            const [h, m] = hora.split(':');
+            const horaDate = new Date(date);
+            horaDate.setHours(parseInt(h), parseInt(m), 0, 0);
+
+            return horaDate > ahora;
+          });
+
+          return [quedanHorasDisponibles, ""];
+        }
+
+        return [true, ""];
+      },
+      onSelect: function (fecha) {
+        actualizarHoras(fecha);
+      }
     });
-  </script>
+
+    const fechaInput = $('#fecha_cita').val();
+    if (fechaInput) {
+      actualizarHoras(fechaInput);
+    }
+
+    $('#hora_grid').on('click', '.hora-btn:not(.disabled)', function () {
+      $('#hora_cita').val($(this).data('hour'));
+      $('#idhora').val($(this).data('id'));
+      $('.hora-btn').removeClass('selected');
+      $(this).addClass('selected');
+    });
+
+    $('#formularioCita').on('submit', function (e) {
+      const tel = $('input[name="telefono"]').val().trim();
+      const email = $('input[name="correo"]').val().trim();
+      const hora = $('#hora_cita').val().trim();
+
+      if (!tel && !email) {
+        e.preventDefault();
+        $('#errorMensaje').show();
+      } else if (!hora) {
+        e.preventDefault();
+        alert("Por favor, selecciona una hora para la cita.");
+      } else {
+        $('#errorMensaje').hide();
+      }
+    });
+  });
+</script>
 </body>
 </html>

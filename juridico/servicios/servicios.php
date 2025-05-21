@@ -149,6 +149,8 @@ if (isset($_GET['servicio_secundario_id'])) {
           <?php endif; ?>
 
           <div class="mb-3 text-center">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()">Regresar</button>
+
             <button type="submit" class="btn btn-primary">Siguiente</button>
           </div>
         </form>

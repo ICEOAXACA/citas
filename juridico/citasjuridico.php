@@ -136,7 +136,7 @@ if (isset($_GET['servicio'])) {
             <div class="form-container">
                 <form action="" method="get">
                     <div class="mb-3">
-                        <label for="servicio" class="form-label">Selecciona el área del servicio</label>
+                        <label for="servicio" class="form-label">Seleccione el área correspondiente a su trámite</label>
                         <select class="form-select" id="servicio" name="servicio" required aria-label="Seleccione un servicio">
                             <option value="" selected disabled>Seleccione una opción</option>
                             <?php
@@ -148,6 +148,8 @@ if (isset($_GET['servicio'])) {
                     </div>
 
                     <div class="mb-3 text-center">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()">Regresar</button>
+
                         <button type="submit" class="btn btn-primary">Siguiente</button>
                     </div>
                 </form>
