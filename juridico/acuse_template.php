@@ -44,16 +44,18 @@
         <div class="info"><strong>Servicio Secundario:</strong> <?= htmlspecialchars($nombre_servicio_secundario) ?></div>
     </div>
 
-    <?php if (!empty($requisitos_filtrados)): ?>
-        <div class="section">
-            <div class="section-title">Requisitos para la Cita</div>
-            <ul class="requisitos">
+    <div class="section">
+        <div class="section-title">Requisitos para la Cita</div>
+        <?php if (!empty($requisitos_filtrados)): ?>
+            <ol class="requisitos">
                 <?php foreach ($requisitos_filtrados as $index => $req): ?>
-                    <li><?= $index + 1 ?>. <?= htmlspecialchars($req) ?></li>
+                    <li><?= ($index + 1) . '. ' . htmlspecialchars($req) ?></li>
                 <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
+            </ol>
+        <?php else: ?>
+            <div class="info">No hay requisitos para este servicio.</div>
+        <?php endif; ?>
+    </div>
 
     <div class="footer">
         Guarda este acuse como comprobante. Para cambios, contacta al instituto.

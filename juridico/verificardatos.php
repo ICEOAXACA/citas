@@ -107,7 +107,11 @@ if (isset($_POST['registrar_cita'])) {
                     'departamento' => $nombre_departamento,
                     'nombre_servicio_principal' => $nombre_servicio_principal,
                     'nombre_servicio_secundario' => $nombre_servicio_secundario,
-                    'logo' => $logo_path
+                    'logo' => $logo_path,
+                    // Agregar los IDs para consulta de requisitos
+                    'servicio' => $servicio,
+                    'secundario' => $secundario,
+                    'principal' => $principal
                 ];
 
                 // Limpiar sesión (datos ya pasaron a sesión temporal)

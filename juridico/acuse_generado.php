@@ -12,7 +12,18 @@ if (!isset($_SESSION['acuse_pdf'])) {
 $data = $_SESSION['acuse_pdf'];
 extract($data); // Esto crea las variables: $nombre, $telefono, $correo, etc.
 
-$requisitos_filtrados = $data['requisitos'] ?? [];
+require_once '../php/c.php';
+$requisitos_filtrados = [];
+if (isset($secundario) && is_numeric($secundario)) {
+    $servicio_secundario_id = $secundario;
+    $sql = "SELECT r.nombre FROM requisitos r JOIN requisitos_servicios_secundarios rss ON r.id = rss.requisito_id WHERE rss.servicio_secundario_id = $1 AND r.estatus = 't' AND rss.estatus = 't'";
+    $resultado = pg_query_params($conexion, $sql, array($servicio_secundario_id));
+    if ($resultado && pg_num_rows($resultado) > 0) {
+        while ($fila = pg_fetch_assoc($resultado)) {
+            $requisitos_filtrados[] = $fila['nombre'];
+        }
+    }
+}
 $logo_src = 'data:image/png;base64,' . base64_encode(file_get_contents($data['logo']));
 
 ob_start();
