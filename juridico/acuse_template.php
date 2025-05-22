@@ -1,9 +1,39 @@
+<?php
+$bg_path = $_SERVER['DOCUMENT_ROOT'] . '/CitasIceo/Imagenes/Fondo.jpeg';
+$bg_data = '';
+if (file_exists($bg_path)) {
+    $bg_data = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($bg_path));
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; font-size: 14px; color: #333; padding: 20px; }
+        <?php if ($bg_data): ?>
+        @page {
+            background-image: url('<?= $bg_data ?>');
+            background-size: cover;
+            background-position: center center;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            padding: 20px;
+            background-image: url('<?= $bg_data ?>');
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+        }
+        <?php else: ?>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            padding: 20px;
+        }
+        <?php endif; ?>
         .header { width: 100%; position: relative; margin-bottom: 20px; }
         .logo { position: absolute; top: 0; right: 0; height: 70px; }
         .title { font-size: 22px; font-weight: bold; }
