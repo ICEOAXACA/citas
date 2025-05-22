@@ -78,8 +78,8 @@ if (file_exists($bg_path)) {
         <div class="section-title">Requisitos para la Cita</div>
         <?php if (!empty($requisitos_filtrados)): ?>
             <ol class="requisitos">
-                <?php foreach ($requisitos_filtrados as $index => $req): ?>
-                    <li><?= ($index + 1) . '. ' . htmlspecialchars($req) ?></li>
+                <?php foreach ($requisitos_filtrados as $req): ?>
+                    <li><?= htmlspecialchars($req) ?></li>
                 <?php endforeach; ?>
             </ol>
         <?php else: ?>
