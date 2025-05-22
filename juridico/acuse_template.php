@@ -70,8 +70,8 @@ if (file_exists($bg_path)) {
     <div class="section">
         <div class="section-title">Servicios Solicitados</div>
         <div class="info"><strong>Departamento:</strong> <?= htmlspecialchars($departamento) ?></div>
-        <div class="info"><strong>Servicio Principal:</strong> <?= htmlspecialchars($nombre_servicio_principal) ?></div>
-        <div class="info"><strong>Servicio Secundario:</strong> <?= htmlspecialchars($nombre_servicio_secundario) ?></div>
+        <div class="info"><strong>Área:</strong> <?= htmlspecialchars($nombre_servicio_principal) ?></div>
+        <div class="info"><strong>Servicio:</strong> <?= htmlspecialchars($nombre_servicio_secundario) ?></div>
     </div>
 
     <div class="section">
@@ -88,7 +88,7 @@ if (file_exists($bg_path)) {
     </div>
 
     <div class="footer">
-        Guarda este acuse como comprobante. Para cambios, contacta al instituto.
+        Guarda este acuse como comprobante. Le recomendamos presentarse con al menos 10 minutos de anticipación.
     </div>
 </body>
 </html>

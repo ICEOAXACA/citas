@@ -261,6 +261,9 @@ if ($res_horas_ocupadas) {
       changeYear: false,
       yearRange: `${hoy.getFullYear()}:${hoy.getFullYear()}`,
       dateFormat: "yy-mm-dd",
+      dayNamesMin: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+      monthNames: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+      monthNamesShort: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
       beforeShowDay: function (date) {
         const d = date.toISOString().split('T')[0];
         const esFinDeSemana = (date.getDay() === 0 || date.getDay() === 6);
