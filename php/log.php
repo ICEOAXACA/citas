@@ -21,12 +21,13 @@ if ((pg_num_rows($datos) > 0)) {
     $user = pg_fetch_result($datos, 0, "usuario");
     $contra = pg_fetch_result($datos, 0, "contraseña");
     $rol = pg_fetch_result($datos, 0, "rol_id");
-
-
+    $id = pg_fetch_result($datos, 0, "id"); // Obtener el id del usuario
 
     //se valida que la variable tenga datos
     if ($usuario == $user and $contra == $pass) {
         $_SESSION['roles'] = $rol;
+        $_SESSION['id'] = $id; // Guardar el id en la sesión
+        $_SESSION['username'] = $user; // Guardar el username en la sesión
         if ($rol == "1") {
             header("Location: ../admin/admin.php");
         } elseif ($rol == "2") {
