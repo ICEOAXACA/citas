@@ -272,7 +272,7 @@ if (!empty($idUsuario)) {
                 <p class="text-muted">Este es tu panel de control.</p>
             </div>
             <div class="dashboard-cards">
-                <div class="card bg-primary text-white">
+                <div class="card bg-primary text-white" id="card-citas">
                     <div class="card-body text-center">
                         <i class="bi bi-calendar-check"></i>
                         <h5 class="card-title mt-2">Citas</h5>
@@ -293,6 +293,15 @@ if (!empty($idUsuario)) {
                         <p class="card-text fs-3">350</p>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div id="vista-citas-tipos" style="display:none;">
+            <div class="mb-4">
+                <button class="btn btn-link" id="btn-volver-inicio"><i class="bi bi-arrow-left"></i> Volver</button>
+                <h3 class="fw-bold">Tipos de Citas</h3>
+            </div>
+            <div class="dashboard-cards" id="cards-tipos-citas">
+                <!-- Cards dinámicas -->
             </div>
         </div>
         <div id="vista-usuarios" style="display:none;">
@@ -320,11 +329,29 @@ if (!empty($idUsuario)) {
                 <div class="card-header bg-secondary text-white"><i class="bi bi-gear"></i> Configuración</div>
                 <div class="card-body">
                     <p>Configura las opciones del sistema aquí.</p>
-                    <button class="btn btn-secondary">Guardar cambios</button>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mostrar tipos de citas:</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="chk-juridico" checked>
+                            <label class="form-check-label" for="chk-juridico">Citas Jurídico</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="chk-tramitacion" checked>
+                            <label class="form-check-label" for="chk-tramitacion">Citas Tramitación</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="chk-cartografia" checked>
+                            <label class="form-check-label" for="chk-cartografia">Citas Cartografía</label>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-guardar-config">Guardar cambios</button>
                 </div>
             </div>
         </div>
         <div id="vista-departamentos" style="display:none;">
+            <div class="mb-4">
+                <button class="btn btn-link" id="btn-volver-inicio-dep"><i class="bi bi-arrow-left"></i> Volver</button>
+            </div>
             <div class="card mb-4">
                 <div class="card-header bg-success text-white"><i class="bi bi-building"></i> Departamentos</div>
                 <div class="card-body">
@@ -403,18 +430,80 @@ if (!empty($idUsuario)) {
                 mostrarVista('vista-departamentos');
             };
         }
+        // Mostrar tipos de citas al hacer click en la card de Citas
+        var cardCitas = document.getElementById('card-citas');
+        if(cardCitas) {
+            cardCitas.onclick = function(e) {
+                mostrarVista('vista-citas-tipos');
+                renderizarCardsTiposCitas();
+            };
+        }
+        // Botón volver a inicio desde tipos de citas
+        document.addEventListener('click', function(e) {
+            if(e.target && e.target.id === 'btn-volver-inicio') {
+                mostrarVista('vista-inicio');
+            }
+        });
+        // Botón volver a inicio desde departamentos
+        document.addEventListener('click', function(e) {
+            if(e.target && e.target.id === 'btn-volver-inicio-dep') {
+                mostrarVista('vista-inicio');
+            }
+        });
         function mostrarVista(id) {
             document.getElementById('vista-inicio').style.display = 'none';
             document.getElementById('vista-usuarios').style.display = 'none';
             document.getElementById('vista-reportes').style.display = 'none';
             document.getElementById('vista-config').style.display = 'none';
             document.getElementById('vista-departamentos').style.display = 'none';
+            document.getElementById('vista-citas-tipos').style.display = 'none';
             document.getElementById(id).style.display = 'block';
         }
         function activarMenu(elemento) {
             document.querySelectorAll('.sidebar-links a').forEach(a => a.classList.remove('active'));
             elemento.classList.add('active');
         }
+        // Renderizar cards de tipos de citas según configuración
+        function renderizarCardsTiposCitas() {
+            var cards = [];
+            var config = getConfigCitas();
+            if(config.juridico) {
+                cards.push(`<div class='card bg-primary text-white'><div class='card-body text-center'><i class='bi bi-briefcase'></i><h5 class='card-title mt-2'>Citas Jurídico</h5></div></div>`);
+            }
+            if(config.tramitacion) {
+                cards.push(`<div class='card bg-info text-white'><div class='card-body text-center'><i class='bi bi-file-earmark-text'></i><h5 class='card-title mt-2'>Citas Tramitación</h5></div></div>`);
+            }
+            if(config.cartografia) {
+                cards.push(`<div class='card bg-warning text-dark'><div class='card-body text-center'><i class='bi bi-geo-alt'></i><h5 class='card-title mt-2'>Citas Cartografía</h5></div></div>`);
+            }
+            document.getElementById('cards-tipos-citas').innerHTML = cards.join('');
+        }
+        // Configuración: guardar y cargar desde localStorage
+        function getConfigCitas() {
+            var config = localStorage.getItem('configCitas');
+            if(config) return JSON.parse(config);
+            return { juridico: true, tramitacion: true, cartografia: true };
+        }
+        function setConfigCitas(config) {
+            localStorage.setItem('configCitas', JSON.stringify(config));
+        }
+        // Al abrir configuración, cargar estado
+        document.getElementById('btn-config').addEventListener('click', function() {
+            var config = getConfigCitas();
+            document.getElementById('chk-juridico').checked = !!config.juridico;
+            document.getElementById('chk-tramitacion').checked = !!config.tramitacion;
+            document.getElementById('chk-cartografia').checked = !!config.cartografia;
+        });
+        // Guardar cambios de configuración
+        document.getElementById('btn-guardar-config').onclick = function() {
+            var config = {
+                juridico: document.getElementById('chk-juridico').checked,
+                tramitacion: document.getElementById('chk-tramitacion').checked,
+                cartografia: document.getElementById('chk-cartografia').checked
+            };
+            setConfigCitas(config);
+            alert('Configuración guardada.');
+        };
     </script>
 
 </body>
