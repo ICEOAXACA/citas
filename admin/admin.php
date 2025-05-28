@@ -265,10 +265,7 @@ if (!empty($idUsuario)) {
 
     <!-- Contenido principal -->
     <div class="main" id="main-content">
-        <!-- DEBUG temporal para mostrar valores -->
-        <div style="background:#ffeeba;color:#856404;padding:8px 16px;margin-bottom:10px;border-radius:6px;">
-            <strong>Debug:</strong> Usuario sesión: <b><?php echo htmlspecialchars($usuario); ?></b> | Nombre completo: <b><?php echo htmlspecialchars($nombreCompleto); ?></b>
-        </div>
+
         <div id="vista-inicio">
             <div class="mb-4">
                 <h2 class="fw-bold">Bienvenido, <?php echo htmlspecialchars($nombreCompleto); ?> 👋</h2>
@@ -277,22 +274,22 @@ if (!empty($idUsuario)) {
             <div class="dashboard-cards">
                 <div class="card bg-primary text-white">
                     <div class="card-body text-center">
-                        <i class="bi bi-person-check"></i>
-                        <h5 class="card-title mt-2">Supervisores</h5>
+                        <i class="bi bi-calendar-check"></i>
+                        <h5 class="card-title mt-2">Citas</h5>
                         <p class="card-text fs-3">125</p>
                     </div>
                 </div>
                 <div class="card bg-success text-white">
                     <div class="card-body text-center">
-                        <i class="bi bi-person-check"></i>
-                        <h5 class="card-title mt-2">Usuarios Atencion</h5>
+                        <i class="bi bi-building"></i>
+                        <h5 class="card-title mt-2">Departamentos</h5>
                         <p class="card-text fs-3">58</p>
                     </div>
                 </div>
                 <div class="card bg-warning text-dark">
                     <div class="card-body text-center">
-                        <i class="bi bi-person-check"></i>
-                        <h5 class="card-title mt-2">Citas</h5>
+                        <i class="bi bi-calendar-x"></i>
+                        <h5 class="card-title mt-2">Dias Inhabiles</h5>
                         <p class="card-text fs-3">350</p>
                     </div>
                 </div>
@@ -301,10 +298,12 @@ if (!empty($idUsuario)) {
         <div id="vista-usuarios" style="display:none;">
             <div class="card mb-4">
                 <div class="card-header bg-success text-white"><i class="bi bi-people"></i> Gestión de Usuarios</div>
+                
                 <div class="card-body">
                     <p>Aquí puedes administrar los usuarios del sistema.</p>
                     <button class="btn btn-primary">Agregar usuario</button>
                 </div>
+                
             </div>
         </div>
         <div id="vista-reportes" style="display:none;">
@@ -322,6 +321,35 @@ if (!empty($idUsuario)) {
                 <div class="card-body">
                     <p>Configura las opciones del sistema aquí.</p>
                     <button class="btn btn-secondary">Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+        <div id="vista-departamentos" style="display:none;">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white"><i class="bi bi-building"></i> Departamentos</div>
+                <div class="card-body">
+                    <?php
+                    $sql = "SELECT * FROM departamentos ORDER BY id";
+                    $result = pg_query($conexion, $sql);
+                    if ($result && pg_num_rows($result) > 0) {
+                        echo '<div class="table-responsive"><table class="table table-bordered table-hover"><thead class="table-success"><tr>';
+                        for ($i = 0; $i < pg_num_fields($result); $i++) {
+                            $fieldName = pg_field_name($result, $i);
+                            echo '<th>' . htmlspecialchars($fieldName) . '</th>';
+                        }
+                        echo '</tr></thead><tbody>';
+                        while ($row = pg_fetch_assoc($result)) {
+                            echo '<tr>';
+                            foreach ($row as $cell) {
+                                echo '<td>' . htmlspecialchars($cell) . '</td>';
+                            }
+                            echo '</tr>';
+                        }
+                        echo '</tbody></table></div>';
+                    } else {
+                        echo '<div class="alert alert-warning">No hay departamentos registrados.</div>';
+                    }
+                    ?>
                 </div>
             </div>
         </div>
@@ -348,31 +376,39 @@ if (!empty($idUsuario)) {
         });
 
         // Cambiar vistas al hacer click en el menú
-        document.getElementById('btn-inicio').addEventListener('click', function(e) {
+        document.getElementById('btn-inicio').onclick = function(e) {
             e.preventDefault();
             mostrarVista('vista-inicio');
             activarMenu(this);
-        });
-        document.getElementById('btn-usuarios').addEventListener('click', function(e) {
+        };
+        document.getElementById('btn-usuarios').onclick = function(e) {
             e.preventDefault();
             mostrarVista('vista-usuarios');
             activarMenu(this);
-        });
-        document.getElementById('btn-reportes').addEventListener('click', function(e) {
+        };
+        document.getElementById('btn-reportes').onclick = function(e) {
             e.preventDefault();
             mostrarVista('vista-reportes');
             activarMenu(this);
-        });
-        document.getElementById('btn-config').addEventListener('click', function(e) {
+        };
+        document.getElementById('btn-config').onclick = function(e) {
             e.preventDefault();
             mostrarVista('vista-config');
             activarMenu(this);
-        });
+        };
+        // Mostrar departamentos desde el dashboard
+        var cardDepartamentos = document.querySelector('.dashboard-cards .card.bg-success');
+        if(cardDepartamentos) {
+            cardDepartamentos.onclick = function(e) {
+                mostrarVista('vista-departamentos');
+            };
+        }
         function mostrarVista(id) {
             document.getElementById('vista-inicio').style.display = 'none';
             document.getElementById('vista-usuarios').style.display = 'none';
             document.getElementById('vista-reportes').style.display = 'none';
             document.getElementById('vista-config').style.display = 'none';
+            document.getElementById('vista-departamentos').style.display = 'none';
             document.getElementById(id).style.display = 'block';
         }
         function activarMenu(elemento) {

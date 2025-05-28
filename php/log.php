@@ -2,6 +2,24 @@
 include 'c.php';
 session_start();
 
+// Evitar mostrar el login si el usuario regresa con el historial
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
+
+// Redirigir si ya hay sesión activa
+if (isset($_SESSION['roles'])) {
+    if ($_SESSION['roles'] == '1') {
+        header('Location: ../admin/admin.php');
+        exit();
+    } elseif ($_SESSION['roles'] == '2') {
+        header('Location: ../supervisor/supervisor.php');
+        exit();
+    } elseif ($_SESSION['roles'] == '3') {
+        header('Location: ../revisor/revisores.php');
+        exit();
+    }
+}
 
 /*se valida que ingresen valores reales para evitar un sql injection
 $usuario =$conexion->real_escape_string(  $_POST['usuario']);
