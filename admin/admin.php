@@ -353,32 +353,116 @@ if (!empty($idUsuario)) {
                 <button class="btn btn-link" id="btn-volver-inicio-dep"><i class="bi bi-arrow-left"></i> Volver</button>
             </div>
             <div class="card mb-4">
-                <div class="card-header bg-success text-white"><i class="bi bi-building"></i> Departamentos</div>
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-building"></i> Departamentos</span>
+                    <button class="btn btn-sm btn-primary" id="btn-agregar-dep"><i class="bi bi-plus-circle"></i> Agregar</button>
+                </div>
                 <div class="card-body">
                     <?php
                     $sql = "SELECT * FROM departamentos ORDER BY id";
                     $result = pg_query($conexion, $sql);
+                    $campos = [];
                     if ($result && pg_num_rows($result) > 0) {
-                        echo '<div class="table-responsive"><table class="table table-bordered table-hover"><thead class="table-success"><tr>';
-                        for ($i = 0; $i < pg_num_fields($result); $i++) {
+                        $num_fields = pg_num_fields($result);
+                        for ($i = 0; $i < $num_fields; $i++) {
                             $fieldName = pg_field_name($result, $i);
+                            $campos[] = $fieldName;
+                        }
+                        echo '<div class="table-responsive"><table class="table table-bordered table-hover" id="tabla-dep"><thead class="table-success"><tr>';
+                        foreach ($campos as $fieldName) {
                             echo '<th>' . htmlspecialchars($fieldName) . '</th>';
                         }
+                        echo '<th>Acciones</th>';
                         echo '</tr></thead><tbody>';
                         while ($row = pg_fetch_assoc($result)) {
                             echo '<tr>';
-                            foreach ($row as $cell) {
-                                echo '<td>' . htmlspecialchars($cell) . '</td>';
+                            foreach ($campos as $fieldName) {
+                                echo '<td>' . htmlspecialchars($row[$fieldName]) . '</td>';
                             }
+                            // Botones de acción
+                            echo '<td class="text-center">'
+                                . '<button class="btn btn-sm btn-outline-secondary btn-editar-dep me-1" title="Editar"><i class="bi bi-pencil-square"></i></button>'
+                                . '<button class="btn btn-sm btn-outline-danger btn-eliminar-dep" title="Eliminar"><i class="bi bi-trash"></i></button>'
+                                . '</td>';
                             echo '</tr>';
                         }
                         echo '</tbody></table></div>';
                     } else {
+                        // Si no hay registros, igual obtenemos los campos
+                        $sql = "SELECT * FROM departamentos LIMIT 1";
+                        $result = pg_query($conexion, $sql);
+                        if ($result) {
+                            $num_fields = pg_num_fields($result);
+                            for ($i = 0; $i < $num_fields; $i++) {
+                                $fieldName = pg_field_name($result, $i);
+                                $campos[] = $fieldName;
+                            }
+                        }
                         echo '<div class="alert alert-warning">No hay departamentos registrados.</div>';
                     }
                     ?>
                 </div>
             </div>
+            <!-- Modal Agregar/Editar Departamento -->
+            <div class="modal fade" id="modalDep" tabindex="-1" aria-labelledby="modalDepLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="modalDepLabel">Agregar Departamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                  </div>
+                  <div class="modal-body">
+                    <form id="formDep">
+                      <?php
+                      foreach ($campos as $campo) {
+                        if ($campo === 'id') {
+                          echo '<input type="hidden" id="dep-id">';
+                          continue;
+                        }
+                        echo '<div class="mb-3">';
+                        echo '<label for="dep-' . htmlspecialchars($campo) . '" class="form-label">' . htmlspecialchars(ucfirst($campo)) . '</label>';
+                        echo '<input type="text" class="form-control" id="dep-' . htmlspecialchars($campo) . '" required>';
+                        echo '</div>';
+                      }
+                      ?>
+                    </form>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-guardar-dep">Guardar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Modal Confirmar Eliminación -->
+            <div class="modal fade" id="modalEliminarDep" tabindex="-1" aria-labelledby="modalEliminarDepLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="modalEliminarDepLabel">Eliminar Departamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                  </div>
+                  <div class="modal-body">
+                    ¿Estás seguro de que deseas eliminar este departamento?
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirmar-eliminar-dep">Eliminar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div id="vista-citas-juridico" style="display:none;">
+            <div class="mb-4 d-flex align-items-center gap-3">
+                <button class="btn btn-link" id="btn-volver-citas-juridico"><i class="bi bi-arrow-left"></i> Volver</button>
+                <h3 class="fw-bold mb-0">Historial de Citas Jurídico</h3>
+                <div class="ms-auto">
+                    <label for="filtro-fecha-citas" class="form-label mb-0 me-2">Filtrar por fecha:</label>
+                    <input type="date" id="filtro-fecha-citas" class="form-control d-inline-block" style="width:auto;" value="<?php echo date('Y-m-d'); ?>">
+                </div>
+            </div>
+            <div id="tabla-historial-citas-juridico-container"></div>
         </div>
     </div>
 
@@ -450,6 +534,12 @@ if (!empty($idUsuario)) {
                 mostrarVista('vista-inicio');
             }
         });
+        // Botón volver a citas jurídico
+        document.addEventListener('click', function(e) {
+            if(e.target && e.target.id === 'btn-volver-citas-juridico') {
+                mostrarVista('vista-citas-tipos');
+            }
+        });
         function mostrarVista(id) {
             document.getElementById('vista-inicio').style.display = 'none';
             document.getElementById('vista-usuarios').style.display = 'none';
@@ -457,6 +547,7 @@ if (!empty($idUsuario)) {
             document.getElementById('vista-config').style.display = 'none';
             document.getElementById('vista-departamentos').style.display = 'none';
             document.getElementById('vista-citas-tipos').style.display = 'none';
+            document.getElementById('vista-citas-juridico').style.display = 'none';
             document.getElementById(id).style.display = 'block';
         }
         function activarMenu(elemento) {
@@ -503,6 +594,201 @@ if (!empty($idUsuario)) {
             };
             setConfigCitas(config);
             alert('Configuración guardada.');
+        };
+        // --- DEPARTAMENTOS CRUD (funcional con backend, todos los campos) ---
+        let depEditando = null;
+        let depFilaEliminando = null;
+        let depIdEliminando = null;
+        const camposDep = <?php echo json_encode($campos); ?>;
+
+        function asignarEventosDepartamentos() {
+            // Editar departamento
+            document.querySelectorAll('.btn-editar-dep').forEach(btn => {
+                btn.onclick = function() {
+                    depEditando = this.closest('tr');
+                    document.getElementById('modalDepLabel').textContent = 'Editar Departamento';
+                    camposDep.forEach((campo, idx) => {
+                        if(campo === 'id') document.getElementById('dep-id').value = depEditando.children[idx].textContent;
+                        else document.getElementById('dep-' + campo).value = depEditando.children[idx].textContent;
+                    });
+                    var modal = new bootstrap.Modal(document.getElementById('modalDep'));
+                    modal.show();
+                };
+            });
+            // Eliminar departamento
+            document.querySelectorAll('.btn-eliminar-dep').forEach(btn => {
+                btn.onclick = function() {
+                    depFilaEliminando = this.closest('tr');
+                    depIdEliminando = depFilaEliminando.children[0].textContent;
+                    var modal = new bootstrap.Modal(document.getElementById('modalEliminarDep'));
+                    modal.show();
+                };
+            });
+        }
+
+        // Llamar al cargar la tabla
+        asignarEventosDepartamentos();
+
+        // Abrir modal para agregar
+        if(document.getElementById('btn-agregar-dep')) {
+            document.getElementById('btn-agregar-dep').onclick = function() {
+                depEditando = null;
+                document.getElementById('modalDepLabel').textContent = 'Agregar Departamento';
+                camposDep.forEach(campo => {
+                    if(campo === 'id') document.getElementById('dep-id').value = '';
+                    else document.getElementById('dep-' + campo).value = '';
+                });
+                var modal = new bootstrap.Modal(document.getElementById('modalDep'));
+                modal.show();
+            };
+        }
+        // Cambia el evento del botón guardar para usar el evento submit del formulario
+        const formDep = document.getElementById('formDep');
+        if(formDep) {
+            formDep.onsubmit = function(e) {
+                e.preventDefault();
+                const formData = new FormData();
+                camposDep.forEach(campo => {
+                    if(campo === 'id') formData.append('id', document.getElementById('dep-id').value);
+                    else formData.append(campo, document.getElementById('dep-' + campo).value);
+                });
+                if(depEditando) {
+                    formData.append('action', 'editar');
+                } else {
+                    formData.append('action', 'agregar');
+                }
+                fetch('../php/departamentos_crud.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if(data.success) {
+                        if(depEditando) {
+                            camposDep.forEach((campo, idx) => {
+                                depEditando.children[idx].textContent = data.departamento[campo];
+                            });
+                        } else {
+                            const tabla = document.getElementById('tabla-dep').getElementsByTagName('tbody')[0];
+                            const nuevaFila = tabla.insertRow();
+                            camposDep.forEach(campo => {
+                                nuevaFila.insertCell().textContent = data.departamento[campo];
+                            });
+                            const cellAcciones = nuevaFila.insertCell();
+                            cellAcciones.className = 'text-center';
+                            cellAcciones.innerHTML = '<button class="btn btn-sm btn-outline-secondary btn-editar-dep me-1" title="Editar"><i class="bi bi-pencil-square"></i></button>' +
+                                '<button class="btn btn-sm btn-outline-danger btn-eliminar-dep" title="Eliminar"><i class="bi bi-trash"></i></button>';
+                        }
+                        // Siempre reasignar eventos tras agregar/editar
+                        asignarEventosDepartamentos();
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('modalDep'));
+                        modal.hide();
+                    } else {
+                        alert(data.error || 'Error al guardar');
+                    }
+                })
+                .catch(() => alert('Error de conexión'));
+            };
+        }
+        // Corrige el botón guardar para que no haga submit por sí solo
+        document.getElementById('btn-guardar-dep').onclick = function(e) {
+            e.preventDefault();
+            formDep.requestSubmit();
+        };
+        // Confirmar eliminar
+        if(document.getElementById('btn-confirmar-eliminar-dep')) {
+            document.getElementById('btn-confirmar-eliminar-dep').onclick = function() {
+                if(!depIdEliminando) return;
+                const formData = new FormData();
+                formData.append('action', 'eliminar');
+                formData.append('id', depIdEliminando);
+                fetch('../php/departamentos_crud.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if(data.success) {
+                        if(depFilaEliminando) depFilaEliminando.remove();
+                        depFilaEliminando = null;
+                        depIdEliminando = null;
+                        asignarEventosDepartamentos();
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('modalEliminarDep'));
+                        modal.hide();
+                    } else {
+                        alert(data.error || 'Error al eliminar');
+                    }
+                })
+                .catch(() => alert('Error de conexión'));
+            };
+        }
+        // Mostrar tabla historial_citas al hacer click en Citas Jurídico
+        function mostrarVistaCitasJuridico() {
+            mostrarVista('vista-citas-juridico');
+            cargarHistorialCitasJuridico();
+        }
+        function cargarHistorialCitasJuridico() {
+            const fecha = document.getElementById('filtro-fecha-citas').value;
+            fetch('../php/historial_citas_juridico.php?fecha=' + encodeURIComponent(fecha))
+                .then(r => r.json())
+                .then(data => {
+                    if(data.success) {
+                        renderTablaHistorialCitasJuridico(data.data);
+                    } else {
+                        document.getElementById('tabla-historial-citas-juridico-container').innerHTML = '<div class="alert alert-danger">Error al cargar datos</div>';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('tabla-historial-citas-juridico-container').innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
+                });
+        }
+        function renderTablaHistorialCitasJuridico(rows) {
+            if(!rows || rows.length === 0) {
+                document.getElementById('tabla-historial-citas-juridico-container').innerHTML = '<div class="alert alert-warning">No hay citas para la fecha seleccionada.</div>';
+                return;
+            }
+            let html = '<div class="table-responsive"><table class="table table-bordered table-hover"><thead class="table-primary"><tr>';
+            // Encabezados dinámicos
+            Object.keys(rows[0]).forEach(col => {
+                html += '<th>' + col + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+            rows.forEach(row => {
+                html += '<tr>';
+                Object.values(row).forEach(cell => {
+                    html += '<td>' + (cell !== null ? cell : '') + '</td>';
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            document.getElementById('tabla-historial-citas-juridico-container').innerHTML = html;
+        }
+        // Evento para filtrar por fecha
+        if(document.getElementById('filtro-fecha-citas')) {
+            document.getElementById('filtro-fecha-citas').addEventListener('change', cargarHistorialCitasJuridico);
+        }
+        // Botón volver
+        if(document.getElementById('btn-volver-citas-juridico')) {
+            document.getElementById('btn-volver-citas-juridico').onclick = function() {
+                mostrarVista('vista-citas-tipos');
+            };
+        }
+        // Hook para mostrar la tabla al hacer click en Citas Jurídico
+        function hookCitasJuridicoCard() {
+            setTimeout(() => {
+                const cards = document.querySelectorAll('#cards-tipos-citas .card');
+                cards.forEach(card => {
+                    if(card.textContent.includes('Jurídico')) {
+                        card.onclick = mostrarVistaCitasJuridico;
+                    }
+                });
+            }, 300);
+        }
+        // Llama hook cada vez que se renderizan los cards de tipos de citas
+        const origRenderizarCardsTiposCitas = renderizarCardsTiposCitas;
+        renderizarCardsTiposCitas = function() {
+            origRenderizarCardsTiposCitas();
+            hookCitasJuridicoCard();
         };
     </script>
 
