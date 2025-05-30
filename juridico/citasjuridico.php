@@ -1,27 +1,26 @@
 <?php
-// Iniciar la sesión
+// Inicio la sesión para manejar los datos del usuario
 session_start();
+// Incluyo la conexión a la base de datos
+require_once '../php/c.php';
 
-// Incluye la conexión a la base de datos
-require_once '../php/c.php';  // Asegúrate de que la conexión esté incluida correctamente
-
-// Obtener el ID de departamento desde la URL (si existe y es un número válido)
+// Obtengo el ID de departamento desde la URL (si existe y es válido)
 $departamento_id = isset($_GET['departamento']) ? filter_var($_GET['departamento'], FILTER_VALIDATE_INT) : null;
 
-$servicios = [];  // Inicializar el array de servicios vacío
+$servicios = [];  // Aquí voy a guardar los servicios principales del departamento
 
 if ($departamento_id) {
-    // Consultar los servicios principales filtrando por departamento_id y estatus = 't'
+    // Consulto los servicios principales activos para el departamento seleccionado
     $sql = "SELECT id, nombre FROM servicios_principales WHERE departamento_id = $1 AND estatus = 't'";
-    $result = pg_query_params($conexion, $sql, array($departamento_id));  // Ejecutar la consulta con parámetros
+    $result = pg_query_params($conexion, $sql, array($departamento_id));
 
-    // Verificar si la consulta fue exitosa
+    // Si la consulta falla, lo registro en el log y muestro error
     if (!$result) {
         error_log('Error en la consulta: ' . pg_last_error($conexion));
         die('Hubo un problema al obtener los servicios, por favor intente nuevamente más tarde.');
     }
 
-    // Verificar si se obtuvieron resultados
+    // Guardo los servicios en el arreglo para mostrarlos en el select
     while ($row = pg_fetch_assoc($result)) {
         $servicios[] = [
             'id' => $row['id'],
@@ -30,7 +29,7 @@ if ($departamento_id) {
     }
 }
 
-// Verificar si el formulario fue enviado y si el servicio es válido
+// Si el usuario selecciona un servicio, lo guardo en la sesión y redirijo según el tipo
 if (isset($_GET['servicio'])) {
     $servicio_id = $_GET['servicio'];
     $_SESSION['secundario'] = $servicio_id;

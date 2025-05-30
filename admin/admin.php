@@ -1,16 +1,19 @@
 <?php
+// Inicio la sesión y valido que el usuario sea administrador (rol 1)
 session_start();
 if (!isset($_SESSION['roles']) || $_SESSION['roles'] != '1') {
     session_destroy();
     header("location:../php/log.php");
     exit();
 }
+// Incluyo la conexión a la base de datos
 require_once '../php/c.php';
+// Obtengo el nombre de usuario de la sesión
 $usuario = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 $idUsuario = '';
 $nombreCompleto = '';
 
-// Si no hay id en sesión, buscarlo por username
+// Si no hay id en sesión, lo busco por username
 if (empty($_SESSION['id']) && !empty($usuario)) {
     $sql = "SELECT id FROM usuarios WHERE usuario = $1 LIMIT 1";
     $result = pg_query_params($conexion, $sql, array($usuario));
@@ -23,6 +26,7 @@ if (empty($_SESSION['id']) && !empty($usuario)) {
     $idUsuario = isset($_SESSION['id']) ? $_SESSION['id'] : '';
 }
 
+// Obtengo el nombre completo del usuario para mostrarlo en el dashboard
 if (!empty($idUsuario)) {
     $sql = "SELECT nombre FROM usuarios WHERE id = $1 LIMIT 1";
     $result = pg_query_params($conexion, $sql, array($idUsuario));

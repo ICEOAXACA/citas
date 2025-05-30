@@ -1,13 +1,15 @@
 <?php
+// Incluyo la conexión a la base de datos
 include 'c.php';
+// Inicio la sesión para manejar el login
 session_start();
 
-// Evitar mostrar el login si el usuario regresa con el historial
+// Evito que el login se quede en caché para que siempre pida usuario y contraseña
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
 
-// Redirigir si ya hay sesión activa
+// Si ya hay sesión activa, redirijo según el rol
 if (isset($_SESSION['roles'])) {
     if ($_SESSION['roles'] == '1') {
         header('Location: ../admin/admin.php');
@@ -21,31 +23,32 @@ if (isset($_SESSION['roles'])) {
     }
 }
 
-/*se valida que ingresen valores reales para evitar un sql injection
+/*
+// Validación para evitar SQL injection (comentado porque se usa pg_query, no mysqli)
 $usuario =$conexion->real_escape_string(  $_POST['usuario']);
-$pass =$conexion->real_escape_string(  $_POST['pass']);*/
+$pass =$conexion->real_escape_string(  $_POST['pass']);
+*/
 
+// Obtengo los datos del formulario
 $usuario = $_POST['usuario'];
 $pass = $_POST['pass'];
-
 
 //se hace la consulta de usuario y contraseña
 $consulta = "SELECT * FROM  usuarios where usuario='$usuario' and contraseña='$pass'";
 $datos = pg_query($conexion, $consulta) or die("Error de Consulta");
 
 if ((pg_num_rows($datos) > 0)) {
-
-
+    // Si hay resultados, obtengo los datos del usuario
     $user = pg_fetch_result($datos, 0, "usuario");
     $contra = pg_fetch_result($datos, 0, "contraseña");
     $rol = pg_fetch_result($datos, 0, "rol_id");
-    $id = pg_fetch_result($datos, 0, "id"); // Obtener el id del usuario
+    $id = pg_fetch_result($datos, 0, "id"); // id del usuario
 
-    //se valida que la variable tenga datos
+    // Valido que los datos coincidan
     if ($usuario == $user and $contra == $pass) {
         $_SESSION['roles'] = $rol;
-        $_SESSION['id'] = $id; // Guardar el id en la sesión
-        $_SESSION['username'] = $user; // Guardar el username en la sesión
+        $_SESSION['id'] = $id; // Guardo el id en la sesión
+        $_SESSION['username'] = $user; // Guardo el username en la sesión
         if ($rol == "1") {
             header("Location: ../admin/admin.php");
         } elseif ($rol == "2") {
@@ -53,55 +56,39 @@ if ((pg_num_rows($datos) > 0)) {
         } elseif ($rol == "3") {
             header("Location: ../revisor/revisores.php");
         } else {
-
+            // Si el rol no es válido, cierro sesión y muestro alerta
             session_start();
             session_unset();
             session_destroy();
-
             echo '
-   
             <script>
                 alert("Intentalo Nuevamente 1");
                 location.href = "login.php";
             </script>
-        
             ';
         }
-
     } else {
-
+        // Si el usuario o contraseña no coinciden, cierro sesión y muestro alerta
         session_start();
         session_unset();
         session_destroy();
         echo '
-   
     <script>
         alert("Intentalo Nuevamente 2");
         location.href = "../login.php";
     </script>
-
     ';
     }
-
-
-
-
-} else { //si no tiene datos de login redireccionamos a que ingresen datos
-
+} else {
+    // Si no hay datos de login, cierro sesión y muestro alerta
     session_start();
     session_unset();
     session_destroy();
-
-
     echo '
-   
     <script>
         alert("Intentalo Nuevamente 3");
         location.href = "../login.php";
     </script>
-    
     ';
-
-
 }
 ?>

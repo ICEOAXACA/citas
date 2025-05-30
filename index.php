@@ -1,11 +1,14 @@
 <?php
+// Inicio la sesión para poder guardar datos del usuario si es necesario
 session_start();
+// Incluyo el archivo de conexión a la base de datos (aquí es donde se conecta todo el sistema con la BD)
 require_once 'php/c.php'; // Conexión a la base de datos
 
-// Consultar departamentos
+// Hago la consulta para traer los departamentos activos (estatus = 't')
 $sql = "SELECT id, nombre FROM departamentos WHERE estatus = 't'";
 $result = pg_query($conexion, $sql);
 
+// Aquí guardo los departamentos en un arreglo para usarlos en el select del formulario
 $departamentos = [];
 if ($result) {
     while ($row = pg_fetch_assoc($result)) {
@@ -13,16 +16,18 @@ if ($result) {
     }
 }
 
-// Verificar si se ha enviado el formulario
+// Si el usuario ya seleccionó un departamento y envió el formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['departamento'])) {
     $departamento_id = $_POST['departamento'];
+    // Guardo el departamento seleccionado en la sesión para usarlo después
     $_SESSION['principal'] = $departamento_id;
 
-    // Redirigir según el departamento seleccionado
+    // Si el departamento es el Jurídico (id = 1), lo mando a la página de citas jurídicas
     if ($departamento_id == 1) {
         header("Location: juridico/citasjuridico.php?departamento=" . urlencode($departamento_id));
         exit();
     } else {
+        // Si es otro departamento, lo mando a la siguiente página (aquí hay que poner la página correcta)
         header("Location: siguiente_pagina.php"); // Cambia esto al siguiente paso normal
         exit();
     }
@@ -111,18 +116,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['departamento'])) {
 <body>
   <!-- Contenedor principal -->
   <div class="container-fluid">
-    <!-- Barra superior -->
+    <!-- Barra superior con el logo, título y botón de login -->
     <div class="top-bar">
       <div class="row align-items-center justify-content-center">
         <div class="col-auto">
+          <!-- Logo del ICEO, si le das click te lleva a la página oficial -->
           <a href="https://www.oaxaca.gob.mx/iceo/" class="logo">
             <img src="Imagenes/logo1.png" alt="logo" class="logo-img" style="height: 50px;">
           </a>
         </div>
         <div class="col text-center" style="min-width: 300px;">
+          <!-- Título principal de la página -->
           <span class="fw-bold fs-4" style="color:#343a40;">Registro de Citas ICEO</span>
         </div>
         <div class="col-auto">
+          <!-- Botón para ir al login de usuarios internos -->
           <nav>
             <a href="login.php" class="nav-link">Iniciar sesión</a>
           </nav>
@@ -130,16 +138,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['departamento'])) {
       </div>
     </div>
 
-    <!-- Formulario -->
+    <!-- Formulario para seleccionar el departamento -->
     <div class="container">
       <div class="form-container">
         <form action="#" method="POST">
-          <!-- Departamento -->
+          <!-- Aquí el usuario elige el departamento al que quiere sacar cita -->
           <div class="mb-3">
             <label for="departamento" class="form-label">Selecciona un departamento</label>
             <select class="form-select" id="departamento" name="departamento" required>
               <option value="" selected disabled>Seleccione un departamento</option>
               <?php
+                // Aquí se imprimen los departamentos que traje de la base de datos
                 foreach ($departamentos as $departamento) {
                     echo "<option value=\"" . htmlspecialchars($departamento['id']) . "\">" . htmlspecialchars($departamento['nombre']) . "</option>";
                 }
@@ -147,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['departamento'])) {
             </select>
           </div>
 
-          <!-- Botón Siguiente -->
+          <!-- Botón para continuar después de seleccionar el departamento -->
           <div class="mb-3 text-center">
             <button type="submit" class="btn btn-primary btn-sm btn-responsive">Siguiente</button>
           </div>

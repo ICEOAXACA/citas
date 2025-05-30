@@ -1,13 +1,17 @@
 <?php
+// Inicio la sesión para validar el rol del usuario
 session_start();
+// Solo dejo pasar a los usuarios con rol 1 (admin)
 if (!isset($_SESSION['roles']) || $_SESSION['roles'] != '1') {
     http_response_code(403);
     echo json_encode(['error' => 'No autorizado']);
     exit();
 }
+// Devuelvo siempre JSON
 header('Content-Type: application/json');
-require_once 'c.php';
+require_once 'c.php'; // Incluyo la conexión a la base de datos
 
+// Esta función obtiene los nombres de los campos de la tabla departamentos
 function get_campos_departamentos($conexion) {
     $campos = [];
     $sql = "SELECT * FROM departamentos LIMIT 1";
@@ -22,10 +26,12 @@ function get_campos_departamentos($conexion) {
     return $campos;
 }
 
+// Leo la acción que se va a realizar (agregar, editar, eliminar)
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 
 switch ($action) {
     case 'agregar':
+        // Agregar un nuevo departamento
         $campos = get_campos_departamentos($conexion);
         $insert_campos = array_filter($campos, fn($c) => $c !== 'id');
         $values = [];
@@ -43,6 +49,7 @@ switch ($action) {
         }
         break;
     case 'editar':
+        // Editar un departamento existente
         $campos = get_campos_departamentos($conexion);
         $update_campos = array_filter($campos, fn($c) => $c !== 'id');
         $id = intval($_POST['id'] ?? 0);
@@ -68,6 +75,7 @@ switch ($action) {
         }
         break;
     case 'eliminar':
+        // Eliminar un departamento por id
         $id = intval($_POST['id'] ?? 0);
         if ($id <= 0) {
             echo json_encode(['error' => 'ID inválido']);
@@ -82,6 +90,7 @@ switch ($action) {
         }
         break;
     default:
+        // Si la acción no es válida
         echo json_encode(['error' => 'Acción no válida']);
         break;
 }

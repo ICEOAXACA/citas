@@ -1,4 +1,5 @@
 <?php
+// Inicio la sesión para manejar los datos de la cita
 session_start();
 require_once '../php/c.php';
 require_once '../vendor/autoload.php';
@@ -6,12 +7,12 @@ require_once '../vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Guardar idhora si viene desde POST
+// Si viene el idhora por POST, lo guardo en la sesión
 if (isset($_POST['idhora'])) {
     $_SESSION['idhora'] = $_POST['idhora'];
 }
 
-// Guardar datos del ciudadano si vienen desde POST
+// Si vienen los datos del ciudadano por POST y aún no están en la sesión, los guardo
 if (
     isset($_POST['nombre'], $_POST['telefono'], $_POST['correo'], $_POST['folio'], $_POST['fecha_cita'], $_POST['hora_cita']) &&
     (!isset($_SESSION['datos_cita']) || empty($_SESSION['datos_cita']))
@@ -26,6 +27,7 @@ if (
     ];
 }
 
+// Saco los datos de la cita de la sesión
 $datos_cita = $_SESSION['datos_cita'] ?? [];
 
 $nombre = $datos_cita['nombre'] ?? '';
@@ -35,14 +37,16 @@ $folio = $datos_cita['folio'] ?? '';
 $fecha_cita = $datos_cita['fecha_cita'] ?? '';
 $hora_cita = $datos_cita['hora_cita'] ?? '';
 
+// Saco los ids de la sesión
 $principal = $_SESSION['principal'] ?? null;
 $secundario = $_SESSION['secundario'] ?? null;
 $servicio = $_SESSION['servicio'] ?? null;
 $idhora = $_SESSION['idhora'] ?? null;
 
+// Inicializo los nombres por si no se encuentran
 $nombre_departamento = $nombre_servicio_principal = $nombre_servicio_secundario = 'No encontrado';
 
-// Obtener nombres desde la base de datos
+// Traigo el nombre del departamento desde la base de datos si tengo el id
 if ($principal) {
     $res = pg_query_params($conexion, "SELECT nombre FROM departamentos WHERE id = $1", [$principal]);
     if ($res && pg_num_rows($res) > 0)

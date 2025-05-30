@@ -1,18 +1,22 @@
 <?php
+// Inicio la sesión para manejar la cita
 session_start();
 require_once '../php/c.php';
 
+// Obtengo el id del servicio principal desde la sesión
 $secundario = $_SESSION['secundario'] ?? null;
 if (!$secundario) {
+  // Si no hay sesión o no está definido, detengo el script
   die("No hay sesión activa o 'secundario' no está definido.");
 }
 
-// Carga de fechas y horas
+// Aquí voy a guardar las fechas y horas que no se pueden usar
 $fechas_inhabiles = [];
 $horas_disponibles = [];
 $fechas_completas = [];
 $horas_ocupadas_por_fecha = [];
 
+// Traigo las fechas inhábiles desde la base de datos
 $sql = "SELECT fecha FROM dias_inhabiles WHERE estatus = 't' AND fecha IS NOT NULL";
 $resultado = pg_query($conexion, $sql);
 if ($resultado) {
@@ -21,6 +25,7 @@ if ($resultado) {
   }
 }
 
+// Traigo las horas disponibles
 $sql_horas = "SELECT id, hora FROM horas WHERE estatus = 't' ORDER BY hora ASC";
 $resultado_horas = pg_query($conexion, $sql_horas);
 $horas_id_map = [];
@@ -31,6 +36,7 @@ if ($resultado_horas) {
   }
 }
 
+// Traigo las fechas que ya están llenas (todas las horas ocupadas)
 $sql_ocupadas = "
   SELECT fecha
   FROM historial_citas
